@@ -11,8 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_details'])) {
     $phone = $_POST['phone'];
     
     // Zorg dat kolommen bestaan (voor de zekerheid in de nieuwe DB)
-    $db->exec("ALTER TABLE clients ADD COLUMN address TEXT");
-    $db->exec("ALTER TABLE clients ADD COLUMN phone TEXT");
+    //$db->exec("ALTER TABLE clients ADD COLUMN address TEXT");
+    //$db->exec("ALTER TABLE clients ADD COLUMN phone TEXT");
 
     $update = $db->prepare("UPDATE clients SET address = ?, phone = ? WHERE id = ?");
     $update->execute([$address, $phone, $id]);
