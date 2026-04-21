@@ -1,6 +1,6 @@
 <?php
 // Verbinding met de gloednieuwe database
-$db = new PDO('sqlite:/var/www/html/MyApp/data.db');
+$db = new PDO('sqlite:/var/www/html/MyData/data.db');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 // Maak de tabel aan als deze nog niet bestaat
