@@ -2,7 +2,7 @@
 {
   "short_name": "MyPiApp",
   "name": "Mijn Raspberry Pi App",
-  "start_url": "./MyApp/myapp.php",
+  "start_url": "./myapp.php",
   "display": "standalone",
   "theme_color": "#000000",
   "background_color": "#000000",
