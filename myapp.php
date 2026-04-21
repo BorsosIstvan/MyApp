@@ -1,66 +1,122 @@
-<?php
-$db = new PDO('sqlite:/var/www/html/clients.db');
-$db->exec("CREATE TABLE IF NOT EXISTS clients (id INTEGER PRIMARY KEY, name TEXT, address TEXT, phone TEXT, image TEXT)");
-
-// Cliënt toevoegen
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_client'])) {
-    $name = $_POST['name'];
-    $imgName = "";
-    
-    if (!empty($_FILES['image']['name'])) {
-        $imgName = time() . '_' . $_FILES['image']['name'];
-        move_uploaded_file($_FILES['image']['tmp_name'], "uploads/" . $imgName);
-    }
-
-    $stmt = $db->prepare("INSERT INTO clients (name, image) VALUES (?, ?)");
-    $stmt->execute([$name, $imgName]);
-}
-
-$clients = $db->query("SELECT * FROM clients")->fetchAll();
-?>
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
-    <title>Client Manager</title>
+    <title>Mijn App</title>
     <style>
-        body { font-family: sans-serif; background: #000; color: #fff; padding: 20px; }
-        .card { background: #1a1a1a; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; }
-        .card img { width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; object-fit: cover; }
-        input, button { padding: 10px; margin: 5px 0; width: 100%; border-radius: 5px; border: none; }
-        button { background: #007bff; color: white; font-weight: bold; }
-        a { color: #007bff; text-decoration: none; }
+        /* Basis stijl - Licht en fris */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: #f4f7f9;
+            color: #333;
+        }
+
+        /* Bovenbalk (Header) */
+        header {
+            background-color: #ffffff;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .header-btn {
+            background: #eef2f7;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #007bff;
+        }
+
+        .header-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #222;
+        }
+
+        /* Grid voor de 4 vierkanten */
+        .container {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .menu-item {
+            background-color: #ffffff;
+            aspect-ratio: 1 / 1; /* Maakt het een vierkant */
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #333;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #eaeaea;
+        }
+
+        .menu-item:active {
+            transform: scale(0.95);
+            background-color: #f0f0f0;
+        }
+
+        .menu-item .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .menu-item span {
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        /* Kleuren per knop voor herkenbaarheid */
+        .projects { border-bottom: 4px solid #007bff; }
+        .inventory { border-bottom: 4px solid #28a745; }
+        .messages { border-bottom: 4px solid #ffc107; }
+        .goals { border-bottom: 4px solid #dc3545; }
+
     </style>
 </head>
 <body>
 
-    <h1>Mijn Cliënten</h1>
+    <header>
+        <button class="header-btn" onclick="location.href='myapp.php'">🏠 Home</button>
+        <div class="header-title">Mijn App</div>
+        <button class="header-btn" style="color: #dc3545;">Uitloggen</button>
+    </header>
 
-    <!-- Formulier om nieuwe cliënt te maken -->
-    <form method="POST" enctype="multipart/form-data" style="margin-bottom: 30px;">
-        <input type="text" name="name" placeholder="Naam cliënt" required>
-        <input type="file" name="image" accept="image/*">
-        <button type="submit" name="add_client">Nieuwe Cliënt Toevoegen</button>
-    </form>
-
-    <!-- Lijst met cliënten -->
-    <div id="client-list">
-        <?php foreach ($clients as $client): ?>
-            <div class="card">
-                <?php if($client['image']): ?>
-                    <img src="uploads/<?= $client['image'] ?>">
-                <?php else: ?>
-                    <div style="width:50px; height:50px; background:#333; border-radius:50%; margin-right:15px;"></div>
-                <?php endif; ?>
-                <div>
-                    <strong><?= htmlspecialchars($client['name']) ?></strong><br>
-                    <a href="details.php?id=<?= $client['id'] ?>">Bekijk details →</a>
-                </div>
-            </div>
-        <?php endforeach; ?>
+    <div class="container">
+        <a href="projects.php" class="menu-item projects">
+            <div class="icon">📂</div>
+            <span>Projecten</span>
+        </a>
+        <a href="inventory.php" class="menu-item inventory">
+            <div class="icon">📦</div>
+            <span>Voorraden</span>
+        </a>
+        <a href="messages.php" class="menu-item messages">
+            <div class="icon">💬</div>
+            <span>Berichten</span>
+        </a>
+        <a href="goals.php" class="menu-item goals">
+            <div class="icon">🎯</div>
+            <span>Doelen</span>
+        </a>
     </div>
 
 </body>
