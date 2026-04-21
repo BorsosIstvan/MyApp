@@ -6,18 +6,31 @@
     <link rel="manifest" href="manifest.json">
     <title>Mijn App</title>
     <style>
-        /* Basis stijl - Licht en fris */
+        /* Basis styling */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
-            background-color: #f4f7f9;
-            color: #333;
+            background-color: #e0e6ed; /* Iets donkerdere achtergrond voor laptop */
+            display: flex;
+            justify-content: center;
         }
 
-        /* Bovenbalk (Header) */
+        /* De Telefoon-container */
+        .phone-wrapper {
+            width: 100%;
+            max-width: 450px; /* Maximale breedte op laptop */
+            min-height: 100vh;
+            background-color: #f4f7f9; /* De echte lichte app-kleur */
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Bovenbalk */
         header {
             background-color: #ffffff;
-            height: 60px;
+            height: 65px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -29,94 +42,99 @@
         }
 
         .header-btn {
-            background: #eef2f7;
+            background: #f0f3f7;
             border: none;
             padding: 8px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
+            border-radius: 10px;
             color: #007bff;
+            font-weight: 600;
+            cursor: pointer;
         }
 
         .header-title {
             font-size: 18px;
-            font-weight: bold;
+            font-weight: 800;
             color: #222;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        /* Grid voor de 4 vierkanten */
-        .container {
+        /* Het Grid */
+        .menu-grid {
             padding: 20px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 10px;
+            gap: 20px;
         }
 
         .menu-item {
             background-color: #ffffff;
-            aspect-ratio: 1 / 1; /* Maakt het een vierkant */
-            border-radius: 20px;
+            aspect-ratio: 1 / 1;
+            border-radius: 24px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-decoration: none;
             color: #333;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid #eaeaea;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.04);
+            transition: all 0.2s ease;
+            border: 1px solid #f0f0f0;
         }
 
         .menu-item:active {
-            transform: scale(0.95);
-            background-color: #f0f0f0;
+            transform: scale(0.92);
         }
 
         .menu-item .icon {
-            font-size: 32px;
-            margin-bottom: 10px;
+            font-size: 35px;
+            margin-bottom: 12px;
         }
 
         .menu-item span {
-            font-weight: 600;
-            font-size: 15px;
+            font-weight: 700;
+            font-size: 14px;
+            color: #555;
         }
 
-        /* Kleuren per knop voor herkenbaarheid */
-        .projects { border-bottom: 4px solid #007bff; }
-        .inventory { border-bottom: 4px solid #28a745; }
-        .messages { border-bottom: 4px solid #ffc107; }
-        .goals { border-bottom: 4px solid #dc3545; }
+        /* Kleuraccenten */
+        .projects { border-top: 5px solid #007bff; }
+        .inventory { border-top: 5px solid #28a745; }
+        .messages { border-top: 5px solid #ffc107; }
+        .goals { border-top: 5px solid #dc3545; }
 
     </style>
 </head>
 <body>
 
-    <header>
-        <button class="header-btn" onclick="location.href='myapp.php'">🏠 Home</button>
-        <div class="header-title">Mijn App</div>
-        <button class="header-btn" style="color: #dc3545;">Uitloggen</button>
-    </header>
+    <!-- Deze div zorgt voor de telefoon-vorm op je laptop -->
+    <div class="phone-wrapper">
+        
+        <header>
+            <button class="header-btn" onclick="location.href='myapp.php'">🏠</button>
+            <div class="header-title">MY APP</div>
+            <button class="header-btn" style="color: #dc3545;">Uit</button>
+        </header>
 
-    <div class="container">
-        <a href="projects.php" class="menu-item projects">
-            <div class="icon">📂</div>
-            <span>Projecten</span>
-        </a>
-        <a href="inventory.php" class="menu-item inventory">
-            <div class="icon">📦</div>
-            <span>Voorraden</span>
-        </a>
-        <a href="messages.php" class="menu-item messages">
-            <div class="icon">💬</div>
-            <span>Berichten</span>
-        </a>
-        <a href="goals.php" class="menu-item goals">
-            <div class="icon">🎯</div>
-            <span>Doelen</span>
-        </a>
+        <div class="menu-grid">
+            <a href="projects.php" class="menu-item projects">
+                <div class="icon">📂</div>
+                <span>Projecten</span>
+            </a>
+            <a href="inventory.php" class="menu-item inventory">
+                <div class="icon">📦</div>
+                <span>Voorraden</span>
+            </a>
+            <a href="messages.php" class="menu-item messages">
+                <div class="icon">💬</div>
+                <span>Berichten</span>
+            </a>
+            <a href="goals.php" class="menu-item goals">
+                <div class="icon">🎯</div>
+                <span>Doelen</span>
+            </a>
+        </div>
+
     </div>
 
 </body>
