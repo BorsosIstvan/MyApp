@@ -10,30 +10,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_details'])) {
     $address = $_POST['address'];
     $phone = $_POST['phone'];
     
-    // Zorg dat kolommen bestaan (voor de zekerheid in de nieuwe DB)
-    //$db->exec("ALTER TABLE clients ADD COLUMN address TEXT");
-    //$db->exec("ALTER TABLE clients ADD COLUMN phone TEXT");
-
+    // 1. Update tekstgegevens
     $update = $db->prepare("UPDATE clients SET address = ?, phone = ? WHERE id = ?");
     $update->execute([$address, $phone, $id]);
-}
     
-    // Foto uploaden
+    // 2. Foto uploaden (indien aanwezig)
     if (!empty($_FILES['image']['name'])) {
         $imgName = time() . '_' . $_FILES['image']['name'];
-        if (move_uploaded_file($_FILES['image']['tmp_name'], "uploads/" . $imgName)) {
+        // Zorg dat het pad naar MyData/uploads wijst
+        $targetPath = "/var/www/html/MyData/uploads/" . $imgName;
+        
+        if (move_uploaded_file($_FILES['image']['tmp_name'], $targetPath)) {
             $db->prepare("UPDATE clients SET image = ? WHERE id = ?")->execute([$imgName, $id]);
         }
     }
+    
+    // 3. Pas NA het opslaan doorsturen
     header("Location: details.php?id=$id&success=1");
     exit();
-}
+} // <-- Hier stond de accolade verkeerd in jouw code
 
-// Cliënt ophalen
+// Cliënt ophalen voor weergave
 $stmt = $db->prepare("SELECT * FROM clients WHERE id = ?");
 $stmt->execute([$id]);
 $client = $stmt->fetch();
 ?>
+
 
 <!DOCTYPE html>
 <html lang="nl">
