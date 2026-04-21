@@ -1,9 +1,7 @@
 <?php
-$file = 'test_bestand.txt';
-if (file_put_contents($file, "Schrijven gelukt!")) {
-    echo "✅ Schrijfrechten zijn OK. Bestand is gemaakt.";
-    unlink($file); // Ruimt het testbestand weer op
+if (extension_loaded('pdo_sqlite')) {
+    echo "✅ SQLite driver is geïnstalleerd!";
 } else {
-    echo "❌ GEEN schrijfrechten. Voer de 'chown' commando's opnieuw uit.";
+    echo "❌ SQLite driver MIST. Voer uit: sudo apt install php-sqlite3";
 }
 ?>
