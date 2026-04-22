@@ -128,15 +128,15 @@ if (!isset($_SESSION['loggedin'])) {
                 <div class="icon">📂</div>
                 <span>Projecten</span>
             </a>
-            <a href="inventory.php" class="menu-item inventory">
+            <a href="under-construction.php?p=voorraden" class="menu-item inventory">
                 <div class="icon">📦</div>
                 <span>Voorraden</span>
             </a>
-            <a href="messages.php" class="menu-item messages">
+            <a href="under-construction.php?p=berichten" class="menu-item messages">
                 <div class="icon">💬</div>
                 <span>Berichten</span>
             </a>
-            <a href="goals.php" class="menu-item goals">
+            <a href="under-construction.php?p=doelen" class="menu-item goals">
                 <div class="icon">🎯</div>
                 <span>Doelen</span>
             </a>
