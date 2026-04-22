@@ -68,26 +68,49 @@ $clients = $db->query("SELECT * FROM clients ORDER BY id DESC")->fetchAll();
             <div style="width: 60px;"></div> <!-- Spacer voor balans -->
         </header>
 
-        <div class="content">
-            <!-- Formulier om client toe te voegen -->
-            <div class="add-form">
-                <form method="POST">
-                    <input type="text" name="name" placeholder="Naam nieuwe client..." required>
-                    <button type="submit" name="add_client" class="btn-add">+ Toevoegen</button>
-                </form>
-            </div>
+		<div class="content">
+			<!-- Zoekbalk -->
+			<div style="margin-bottom: 15px;">
+				<input type="text" id="searchInput" placeholder="🔍 Zoek cliënt..." 
+					   style="margin-bottom: 0; border: 2px solid #007bff;">
+			</div>
 
-            <!-- Lijst van clienten -->
-            <div class="list">
-                <?php foreach ($clients as $client): ?>
-                    <div class="client-card">
-                        <span class="client-info"><?= htmlspecialchars($client['name']) ?></span>
-                        <a href="details.php?id=<?= $client['id'] ?>" class="btn-view">OPEN</a>
-                    </div>
-                <?php endforeach; ?>
-                <?php if(empty($clients)) echo "<p style='text-align:center; color:#999;'>Nog geen clienten toegevoegd.</p>"; ?>
-            </div>
-        </div>
+			<!-- Formulier om client toe te voegen -->
+			<div class="add-form">
+				<form method="POST">
+					<input type="text" name="name" placeholder="Naam nieuwe client..." required>
+					<button type="submit" name="add_client" class="btn-add">+ Toevoegen</button>
+				</form>
+			</div>
+
+			<!-- Lijst van clienten -->
+			<div class="list" id="clientList">
+				<?php foreach ($clients as $client): ?>
+					<div class="client-card" data-name="<?= strtolower(htmlspecialchars($client['name'])) ?>">
+						<span class="client-info"><?= htmlspecialchars($client['name']) ?></span>
+						<a href="details.php?id=<?= $client['id'] ?>" class="btn-view">OPEN</a>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</div>
+
+		<script>
+			// JavaScript voor live filteren
+			document.getElementById('searchInput').addEventListener('keyup', function() {
+				let filter = this.value.toLowerCase();
+				let cards = document.querySelectorAll('.client-card');
+
+				cards.forEach(card => {
+					let name = card.getAttribute('data-name');
+					if (name.includes(filter)) {
+						card.style.display = "flex";
+					} else {
+						card.style.display = "none";
+					}
+				});
+			});
+		</script>
+
     </div>
 
 </body>
