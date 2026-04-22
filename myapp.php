@@ -109,6 +109,25 @@ if (!isset($_SESSION['loggedin'])) {
         .inventory { border-top: 5px solid #28a745; }
         .messages { border-top: 5px solid #ffc107; }
         .goals { border-top: 5px solid #dc3545; }
+		
+		.header-center {
+			text-align: center;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+		}
+
+		.user-badge {
+			font-size: 11px;
+			font-weight: 600;
+			color: #007bff;
+			background: #eef2f7;
+			padding: 2px 8px;
+			border-radius: 12px;
+			margin-top: 2px;
+			text-transform: none;
+		}
+
 
     </style>
 </head>
@@ -117,11 +136,19 @@ if (!isset($_SESSION['loggedin'])) {
     <!-- Deze div zorgt voor de telefoon-vorm op je laptop -->
     <div class="phone-wrapper">
         
-        <header>
-            <button class="header-btn" onclick="location.href='myapp.php'">🏠</button>
-            <div class="header-title">MY APP</div>
-            <button class="header-btn" onclick="location.href='logout.php'" style="color: #dc3545;">Uit</button>
-        </header>
+		<header>
+			<!-- Home knop -->
+			<button class="header-btn" onclick="location.href='myapp.php'">🏠</button>
+			
+			<!-- Middenstuk met Titel en Gebruikersnaam -->
+			<div class="header-center">
+				<div class="header-title">MY APP</div>
+				<div class="user-badge">👤 <?= htmlspecialchars($_SESSION['user'] ?? 'Gast') ?></div>
+			</div>
+
+			<!-- Uitlog knop -->
+			<a href="logout.php" class="header-btn" style="color: #dc3545; text-decoration: none;">Uit</a>
+		</header>
 
         <div class="menu-grid">
             <a href="projects.php" class="menu-item projects">
