@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if ($stmt->fetch()) {
         $_SESSION['loggedin'] = true;
-        header("Location: myapp2.php");
+        header("Location: myapp.php");
         exit;
     } else {
         $error = "Onjuiste gegevens!";
