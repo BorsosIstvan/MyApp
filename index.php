@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     if ($stmt->fetch()) {
         $_SESSION['loggedin'] = true;
+		$_SESSION['user'] = $user;
         header("Location: myapp.php");
         exit;
     } else {
