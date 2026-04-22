@@ -111,7 +111,7 @@ $client = $stmt->fetch();
         <div class="card">
             <div class="profile-section">
                 <?php if($client['image']): ?>
-                    <img src="uploads/<?= htmlspecialchars($client['image']) ?>" class="profile-img">
+					<img src="show_image.php?img=<?= htmlspecialchars($client['image']) ?>" class="profile-img">
                 <?php else: ?>
                     <div class="no-img">👤</div>
                 <?php endif; ?>
