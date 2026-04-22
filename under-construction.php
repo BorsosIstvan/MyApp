@@ -32,6 +32,7 @@ $pagina = $_GET['p'] ?? 'Pagina';
             <div class="icon">🚧</div>
             <h1>Onder Constructie</h1>
             <p>We werken hard aan de <strong><?= htmlspecialchars($pagina) ?></strong> module. Kom snel terug!</p>
+			<p>Sessie is: <?= ($_SESSION)?></p>
         </div>
     </div>
 </body>
