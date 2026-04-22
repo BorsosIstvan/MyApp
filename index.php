@@ -20,6 +20,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 ?>
 
+<?php if(isset($_GET['registered'])): ?>
+    <p style="color: green; font-size: 14px;">Account aangemaakt! Je kunt nu inloggen.</p>
+<?php endif; ?>
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -43,6 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <input type="password" name="password" placeholder="Wachtwoord" required>
             <button type="submit">INLOGGEN</button>
         </form>
+		<a href="register.php" style="display: block; margin-top: 15px; color: #007bff; text-decoration: none; font-size: 14px;">
+			Nog geen account? Aanmelden
+		</a>
     </div>
 </body>
 </html>
