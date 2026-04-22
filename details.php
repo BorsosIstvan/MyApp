@@ -1,4 +1,12 @@
 <?php
+session_start();
+if (!isset($_SESSION['loggedin'])) {
+    header("Location: index.php");
+    exit;
+}
+?>
+
+<?php
 $db = new PDO('sqlite:/var/www/html/MyData/data.db');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
