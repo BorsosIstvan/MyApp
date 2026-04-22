@@ -37,6 +37,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_details'])) {
     header("Location: details.php?id=$id&success=1");
     exit();
 } // <-- Hier stond de accolade verkeerd in jouw code
+// Cliënt verwijderen
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_client'])) {
+    // Haal eerst de bestandsnaam van de foto op om deze te wissen
+    $stmt = $db->prepare("SELECT image FROM clients WHERE id = ?");
+    $stmt->execute([$id]);
+    $imgToDelete = $stmt->fetchColumn();
+
+    if ($imgToDelete) {
+        $filePath = "/var/www/html/MyData/uploads/" . $imgToDelete;
+        if (file_exists($filePath)) { unlink($filePath); }
+    }
+
+    // Verwijder de cliënt uit de database
+    $delete = $db->prepare("DELETE FROM clients WHERE id = ?");
+    $delete->execute([$id]);
+
+    header("Location: projects.php");
+    exit();
+}
 
 // Cliënt ophalen voor weergave
 $stmt = $db->prepare("SELECT * FROM clients WHERE id = ?");
@@ -110,7 +129,15 @@ $client = $stmt->fetch();
                 <input type="file" name="image" accept="image/*" style="border: none; padding: 0;">
 
                 <button type="submit" name="save_details" class="btn-save">GEGEVENS OPSLAAN</button>
+				<hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0 20px 0;">
             </form>
+			<form method="POST" onsubmit="return confirm('Weet je zeker dat je deze cliënt wilt verwijderen?');">
+				<button type="submit" name="delete_client" 
+						style="width: 100%; background: none; border: 2px solid #dc3545; color: #dc3545; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;">
+					🗑️ CLIËNT VERWIJDEREN
+				</button>
+			</form>
+
         </div>
     </div>
 </div>
