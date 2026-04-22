@@ -120,7 +120,7 @@ if (!isset($_SESSION['loggedin'])) {
         <header>
             <button class="header-btn" onclick="location.href='myapp.php'">🏠</button>
             <div class="header-title">MY APP</div>
-            <button class="header-btn" style="color: #dc3545;">Uit</button>
+            <button class="header-btn" onclick="location.href='logout.php'" style="color: #dc3545;">Uit</button>
         </header>
 
         <div class="menu-grid">
