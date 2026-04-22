@@ -159,7 +159,7 @@ if (!isset($_SESSION['loggedin'])) {
                 <div class="icon">📦</div>
                 <span>Voorraden</span>
             </a>
-            <a href="under-construction.php?p=berichten" class="menu-item messages">
+            <a href="users_list.php?p=berichten" class="menu-item messages">
                 <div class="icon">💬</div>
                 <span>Berichten</span>
             </a>
