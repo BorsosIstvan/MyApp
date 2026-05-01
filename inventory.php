@@ -8,7 +8,7 @@ $spreadsheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtW
 
 $data = [];
 // We voegen een timeout toe voor het geval Google traag is
-$context = stream_context_create(['http' => ['timeout' => 5]]);
+$context = stream_context_create(['http' => ['timeout' => 15]]);
 
 if ($spreadsheet_url !== "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtWDNH9rcTBu1uKNaioH4n4kPQU5CA48S-0IX7Z_fFh1dAyKfhnvCX2qUmw-vQzNu8qQGa/pub?output=csv") {
     if (($handle = fopen($spreadsheet_url, "r", false, $context)) !== FALSE) {
