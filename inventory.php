@@ -3,14 +3,14 @@ session_start();
 if (!isset($_SESSION['loggedin'])) { header("Location: index.php"); exit; }
 
 // --- PLAK HIER JE GEPUBLICEERDE GOOGLE CSV LINK ---
-$spreadsheet_url = "JOUW_GOOGLE_CSV_LINK_HIER";
+$spreadsheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtWDNH9rcTBu1uKNaioH4n4kPQU5CA48S-0IX7Z_fFh1dAyKfhnvCX2qUmw-vQzNu8qQGa/pub?output=csv";
 // ------------------------------------------------
 
 $data = [];
 // We voegen een timeout toe voor het geval Google traag is
 $context = stream_context_create(['http' => ['timeout' => 5]]);
 
-if ($spreadsheet_url !== "JOUW_GOOGLE_CSV_LINK_HIER") {
+if ($spreadsheet_url !== "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtWDNH9rcTBu1uKNaioH4n4kPQU5CA48S-0IX7Z_fFh1dAyKfhnvCX2qUmw-vQzNu8qQGa/pub?output=csv") {
     if (($handle = fopen($spreadsheet_url, "r", false, $context)) !== FALSE) {
         while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
             $data[] = $row;
