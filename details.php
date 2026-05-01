@@ -50,6 +50,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_dynamic'])) {
 $stmtData = $db->prepare("SELECT field_name, value FROM project_results WHERE client_id = ?");
 $stmtData->execute([$id]);
 $savedData = $stmtData->fetchAll(PDO::FETCH_KEY_PAIR); // Maakt een handig lijstje ['veldnaam' => 'waarde']
+// 4. Bereken voortgang
+$totalFields = count($fields);
+$filledFields = 0;
+foreach ($fields as $field) {
+    if (!empty($savedData[$field['field_name']])) {
+        $filledFields++;
+    }
+}
+$percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) : 0;
 ?>
 
 
@@ -78,6 +87,17 @@ $savedData = $stmtData->fetchAll(PDO::FETCH_KEY_PAIR); // Maakt een handig lijst
         </header>
 
         <div class="content">
+					<!-- Status sectie -->
+			<div style="margin-bottom: 20px;">
+				<div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #555;">
+					<span>VOORTGANG: <?= $current_step ?></span>
+					<span><?= $percentage ?>%</span>
+				</div>
+				<div style="width: 100%; background: #ddd; height: 10px; border-radius: 5px; overflow: hidden;">
+					<div style="width: <?= $percentage ?>%; background: #28a745; height: 100%; transition: width 0.5s;"></div>
+				</div>
+			</div>
+
             <h2 style="margin-top:0;"><?= htmlspecialchars($client['name']) ?></h2>
             
             <form method="POST" enctype="multipart/form-data">
