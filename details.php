@@ -6,35 +6,52 @@ $db = new PDO('sqlite:/var/www/html/MyData/data.db');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $id = $_GET['id'] ?? null;
-$current_step = $_GET['step'] ?? 'Schouwing'; // Welke stap bekijken we nu?
+$current_step = $_GET['step'] ?? 'Schouwing';
 
-// Haal de configuratie voor deze stap op
+// 1. Haal configuratie en client op
 $stmtConfig = $db->prepare("SELECT * FROM config WHERE step_name = ?");
 $stmtConfig->execute([$current_step]);
 $fields = $stmtConfig->fetchAll();
 
-// Haal client info op
 $stmtClient = $db->prepare("SELECT * FROM clients WHERE id = ?");
 $stmtClient->execute([$id]);
 $client = $stmtClient->fetch();
 
-// Verwerken van het dynamische formulier
+// 2. Verwerken van de invoer
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_dynamic'])) {
     foreach ($fields as $field) {
-        $name = $field['field_name'];
-        
-        if ($field['type'] == 'image' && !empty($_FILES[$name]['name'])) {
-            // Foto uploaden
-            $imgName = time() . '_' . $_FILES[$name]['name'];
-            move_uploaded_file($_FILES[$name]['tmp_name'], "/var/www/html/MyData/uploads/" . $imgName);
-            // Sla de naam op (hiervoor moet je een tabel 'project_data' hebben, maar we doen nu even simpel)
+        $fieldName = $field['field_name'];
+        $val = "";
+
+        if ($field['type'] == 'image' && !empty($_FILES[$fieldName]['name'])) {
+            // Foto afhandelen
+            $val = time() . '_' . basename($_FILES[$fieldName]['name']);
+            move_uploaded_file($_FILES[$fieldName]['tmp_name'], "/var/www/html/MyData/uploads/" . $val);
+        } else {
+            // Tekst, getal of checkbox afhandelen
+            $val = $_POST[$fieldName] ?? '';
         }
-        // Hier zou je de data opslaan in een tabel 'project_data' gekoppeld aan het client_id
+
+        if ($val !== "") {
+            // Verwijder oud antwoord voor dit veld (overschrijven)
+            $db->prepare("DELETE FROM project_results WHERE client_id = ? AND field_name = ?")
+               ->execute([$id, $fieldName]);
+
+            // Sla nieuw antwoord op
+            $stmt = $db->prepare("INSERT INTO project_results (client_id, field_name, value, step_name) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$id, $fieldName, $val, $current_step]);
+        }
     }
     header("Location: details.php?id=$id&step=$current_step&success=1");
     exit;
 }
+
+// 3. Haal reeds ingevulde data op om te tonen in de velden
+$stmtData = $db->prepare("SELECT field_name, value FROM project_results WHERE client_id = ?");
+$stmtData->execute([$id]);
+$savedData = $stmtData->fetchAll(PDO::FETCH_KEY_PAIR); // Maakt een handig lijstje ['veldnaam' => 'waarde']
 ?>
+
 
 <!DOCTYPE html>
 <html lang="nl">
@@ -64,20 +81,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_dynamic'])) {
             <h2 style="margin-top:0;"><?= htmlspecialchars($client['name']) ?></h2>
             
             <form method="POST" enctype="multipart/form-data">
-                <?php foreach ($fields as $field): ?>
-                    <div class="form-group">
-                        <label><?= htmlspecialchars($field['label']) ?></label>
-                        <?php if ($field['type'] == 'image'): ?>
-                            <input type="file" name="<?= $field['field_name'] ?>" accept="image/*">
-                        <?php elseif ($field['type'] == 'number'): ?>
-                            <input type="number" name="<?= $field['field_name'] ?>" placeholder="Vul getal in">
-                        <?php elseif ($field['type'] == 'checkbox'): ?>
-                            <input type="checkbox" name="<?= $field['field_name'] ?>" style="width: 20px; height: 20px;"> Ja
-                        <?php else: ?>
-                            <input type="text" name="<?= $field['field_name'] ?>" placeholder="Typ hier...">
-                        <?php endif; ?>
-                    </div>
-                <?php endforeach; ?>
+                <?php foreach ($fields as $field): 
+					$currentVal = $savedData[$field['field_name']] ?? ''; 
+				?>
+					<div class="form-group">
+						<label><?= htmlspecialchars($field['label']) ?></label>
+						
+						<?php if ($field['type'] == 'image'): ?>
+							<?php if($currentVal): ?>
+								<p style="font-size:12px; color:green;">✅ Foto aanwezig: <?= $currentVal ?></p>
+							<?php endif; ?>
+							<input type="file" name="<?= $field['field_name'] ?>" accept="image/*">
+							
+						<?php elseif ($field['type'] == 'number'): ?>
+							<input type="number" name="<?= $field['field_name'] ?>" value="<?= htmlspecialchars($currentVal) ?>">
+							
+						<?php elseif ($field['type'] == 'checkbox'): ?>
+							<input type="checkbox" name="<?= $field['field_name'] ?>" value="Ja" <?= ($currentVal == 'Ja') ? 'checked' : '' ?>> Ja
+							
+						<?php else: ?>
+							<input type="text" name="<?= $field['field_name'] ?>" value="<?= htmlspecialchars($currentVal) ?>">
+							
+						<?php endif; ?>
+					</div>
+				<?php endforeach; ?>
 
                 <button type="submit" name="save_dynamic" class="btn-save">STAP VOLTOOIEN</button>
             </form>
