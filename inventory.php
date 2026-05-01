@@ -2,11 +2,11 @@
 session_start();
 if (!isset($_SESSION['loggedin'])) { header("Location: index.php"); exit; }
 
-$spreadsheet_url = "JOUW_GOOGLE_CSV_LINK_HIER";
+$spreadsheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtWDNH9rcTBu1uKNaioH4n4kPQU5CA48S-0IX7Z_fFh1dAyKfhnvCX2qUmw-vQzNu8qQGa/pub?output=csv";
 
 $data = [];
 
-if ($spreadsheet_url !== "JOUW_GOOGLE_CSV_LINK_HIER") {
+if ($spreadsheet_url !== "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtWDNH9rcTBu1uKNaioH4n4kPQU5CA48S-0IX7Z_fFh1dAyKfhnvCX2qUmw-vQzNu8qQGa/pub?output=csv") {
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $spreadsheet_url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
