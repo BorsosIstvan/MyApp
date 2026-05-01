@@ -2,37 +2,23 @@
 session_start();
 if (!isset($_SESSION['loggedin'])) { header("Location: index.php"); exit; }
 
+// --- PLAK HIER JE GEPUBLICEERDE GOOGLE CSV LINK ---
 $spreadsheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtWDNH9rcTBu1uKNaioH4n4kPQU5CA48S-0IX7Z_fFh1dAyKfhnvCX2qUmw-vQzNu8qQGa/pub?output=csv";
+// ------------------------------------------------
+
 $data = [];
+// We voegen een timeout toe voor het geval Google traag is
+$context = stream_context_create(['http' => ['timeout' => 5]]);
 
-if (!empty($spreadsheet_url) && $spreadsheet_url !== "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtWDNH9rcTBu1uKNaioH4n4kPQU5CA48S-0IX7Z_fFh1dAyKfhnvCX2qUmw-vQzNu8qQGa/pub?output=csv") {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $spreadsheet_url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-    // Google wil soms weten wie de data opvraagt, we doen alsof we een browser zijn:
-    curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
-    
-    $content = curl_exec($ch);
-    
-    if(curl_errno($ch)){
-        echo 'Fout: ' . curl_error($ch);
-    }
-    curl_close($ch);
-
-    if ($content) {
-        // We splitsen de regels en filteren eventuele lege regels eruit
-        $lines = explode("\n", str_replace("\r", "", $content));
-        foreach ($lines as $line) {
-            if (!empty(trim($line))) {
-                $data[] = str_getcsv($line);
-            }
+if ($spreadsheet_url !== "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtWDNH9rcTBu1uKNaioH4n4kPQU5CA48S-0IX7Z_fFh1dAyKfhnvCX2qUmw-vQzNu8qQGa/pub?output=csv") {
+    if (($handle = fopen($spreadsheet_url, "r", false, $context)) !== FALSE) {
+        while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
+            $data[] = $row;
         }
+        fclose($handle);
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="nl">
