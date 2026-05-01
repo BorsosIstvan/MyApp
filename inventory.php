@@ -2,23 +2,30 @@
 session_start();
 if (!isset($_SESSION['loggedin'])) { header("Location: index.php"); exit; }
 
-// --- PLAK HIER JE GEPUBLICEERDE GOOGLE CSV LINK ---
-$spreadsheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtWDNH9rcTBu1uKNaioH4n4kPQU5CA48S-0IX7Z_fFh1dAyKfhnvCX2qUmw-vQzNu8qQGa/pub?output=csv";
-// ------------------------------------------------
+$spreadsheet_url = "JOUW_GOOGLE_CSV_LINK_HIER";
 
 $data = [];
-// We voegen een timeout toe voor het geval Google traag is
-$context = stream_context_create(['http' => ['timeout' => 5]]);
 
-if ($spreadsheet_url !== "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtWDNH9rcTBu1uKNaioH4n4kPQU5CA48S-0IX7Z_fFh1dAyKfhnvCX2qUmw-vQzNu8qQGa/pub?output=csv") {
-    if (($handle = fopen($spreadsheet_url, "r", false, $context)) !== FALSE) {
-        while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
-            $data[] = $row;
+if ($spreadsheet_url !== "JOUW_GOOGLE_CSV_LINK_HIER") {
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $spreadsheet_url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1); // Belangrijk voor Google redirects
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Omzeilt SSL problemen op de Pi
+    $content = curl_exec($ch);
+    curl_close($ch);
+
+    if ($content) {
+        $lines = explode("\n", $content);
+        foreach ($lines as $line) {
+            $data[] = str_getcsv($line);
         }
-        fclose($handle);
+        // Verwijder eventuele lege laatste regel
+        if (empty(end($data)[0])) array_pop($data);
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="nl">
