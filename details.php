@@ -1,146 +1,87 @@
 <?php
 session_start();
-if (!isset($_SESSION['loggedin'])) {
-    header("Location: index.php");
-    exit;
-}
-?>
+if (!isset($_SESSION['loggedin'])) { header("Location: index.php"); exit; }
 
-<?php
 $db = new PDO('sqlite:/var/www/html/MyData/data.db');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $id = $_GET['id'] ?? null;
-if (!$id) { header("Location: projects.php"); exit(); }
+$current_step = $_GET['step'] ?? 'Schouwing'; // Welke stap bekijken we nu?
 
-// Gegevens updaten
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_details'])) {
-    $address = $_POST['address'];
-    $phone = $_POST['phone'];
-    
-    // 1. Update tekstgegevens
-    $update = $db->prepare("UPDATE clients SET address = ?, phone = ? WHERE id = ?");
-    $update->execute([$address, $phone, $id]);
-    
-    // 2. Foto uploaden (indien aanwezig)
-    if (!empty($_FILES['image']['name'])) {
-        $imgName = time() . '_' . $_FILES['image']['name'];
-        // Zorg dat het pad naar MyData/uploads wijst
-        $targetPath = "/var/www/html/MyData/uploads/" . $imgName;
+// Haal de configuratie voor deze stap op
+$stmtConfig = $db->prepare("SELECT * FROM config WHERE step_name = ?");
+$stmtConfig->execute([$current_step]);
+$fields = $stmtConfig->fetchAll();
+
+// Haal client info op
+$stmtClient = $db->prepare("SELECT * FROM clients WHERE id = ?");
+$stmtClient->execute([$id]);
+$client = $stmtClient->fetch();
+
+// Verwerken van het dynamische formulier
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_dynamic'])) {
+    foreach ($fields as $field) {
+        $name = $field['field_name'];
         
-        if (move_uploaded_file($_FILES['image']['tmp_name'], $targetPath)) {
-            $db->prepare("UPDATE clients SET image = ? WHERE id = ?")->execute([$imgName, $id]);
+        if ($field['type'] == 'image' && !empty($_FILES[$name]['name'])) {
+            // Foto uploaden
+            $imgName = time() . '_' . $_FILES[$name]['name'];
+            move_uploaded_file($_FILES[$name]['tmp_name'], "/var/www/html/MyData/uploads/" . $imgName);
+            // Sla de naam op (hiervoor moet je een tabel 'project_data' hebben, maar we doen nu even simpel)
         }
+        // Hier zou je de data opslaan in een tabel 'project_data' gekoppeld aan het client_id
     }
-    
-    // 3. Pas NA het opslaan doorsturen
-    header("Location: details.php?id=$id&success=1");
-    exit();
-} // <-- Hier stond de accolade verkeerd in jouw code
-// Cliënt verwijderen
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_client'])) {
-    // Haal eerst de bestandsnaam van de foto op om deze te wissen
-    $stmt = $db->prepare("SELECT image FROM clients WHERE id = ?");
-    $stmt->execute([$id]);
-    $imgToDelete = $stmt->fetchColumn();
-
-    if ($imgToDelete) {
-        $filePath = "/var/www/html/MyData/uploads/" . $imgToDelete;
-        if (file_exists($filePath)) { unlink($filePath); }
-    }
-
-    // Verwijder de cliënt uit de database
-    $delete = $db->prepare("DELETE FROM clients WHERE id = ?");
-    $delete->execute([$id]);
-
-    header("Location: projects.php");
-    exit();
+    header("Location: details.php?id=$id&step=$current_step&success=1");
+    exit;
 }
-
-// Cliënt ophalen voor weergave
-$stmt = $db->prepare("SELECT * FROM clients WHERE id = ?");
-$stmt->execute([$id]);
-$client = $stmt->fetch();
 ?>
-
 
 <!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Details - <?= htmlspecialchars($client['name']) ?></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflow - <?= htmlspecialchars($current_step) ?></title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #e0e6ed; display: flex; justify-content: center; }
-        .phone-wrapper { width: 100%; max-width: 450px; min-height: 100vh; background-color: #f4f7f9; box-shadow: 0 0 20px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
-        
-        header { background: #fff; height: 65px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
-        .header-btn { background: #f0f3f7; border: none; padding: 8px 12px; border-radius: 10px; color: #007bff; text-decoration: none; font-size: 14px; font-weight: bold; }
-        .header-title { font-size: 16px; font-weight: 800; color: #222; text-transform: uppercase; }
-
+        body { font-family: 'Segoe UI', sans-serif; background: #e0e6ed; display: flex; justify-content: center; margin:0; }
+        .phone-wrapper { width: 100%; max-width: 450px; min-height: 100vh; background: #f4f7f9; }
+        header { background: #fff; padding: 15px; display: flex; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .content { padding: 20px; }
-        .card { background: #fff; padding: 20px; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); margin-bottom: 20px; }
-        
-        .profile-section { text-align: center; margin-bottom: 20px; }
-        .profile-img { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .no-img { width: 120px; height: 120px; border-radius: 50%; background: #eef2f7; display: inline-flex; align-items: center; justify-content: center; font-size: 40px; color: #adb5bd; }
-
-        label { display: block; font-weight: 700; font-size: 13px; color: #666; margin-bottom: 5px; margin-left: 5px; text-transform: uppercase; }
-        input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 12px; border: 1px solid #eee; background: #fcfdfe; box-sizing: border-box; font-size: 16px; }
-        
-        .btn-save { width: 100%; background: #28a745; color: #fff; border: none; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; transition: background 0.2s; }
-        .btn-save:active { background: #218838; transform: scale(0.98); }
-        
-        .success-msg { background: #d4edda; color: #155724; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 15px; font-size: 14px; }
+        .form-group { background: #fff; padding: 15px; border-radius: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
+        label { display: block; font-weight: bold; margin-bottom: 8px; color: #555; font-size: 14px; }
+        input[type="text"], input[type="number"], input[type="file"] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+        .btn-save { width: 100%; background: #28a745; color: white; border: none; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
+    <div class="phone-wrapper">
+        <header>
+            <a href="projects.php" style="text-decoration:none;">🏠</a>
+            <div style="flex:1; text-align:center; font-weight:bold;"><?= strtoupper($current_step) ?></div>
+        </header>
 
-<div class="phone-wrapper">
-    <header>
-        <a href="projects.php" class="header-btn">← Terug</a>
-        <div class="header-title">DETAILS</div>
-        <div style="width: 60px;"></div>
-    </header>
-
-    <div class="content">
-        <?php if(isset($_GET['success'])): ?>
-            <div class="success-msg">Gegevens succesvol opgeslagen!</div>
-        <?php endif; ?>
-
-        <div class="card">
-            <div class="profile-section">
-                <?php if($client['image']): ?>
-					<img src="show_image.php?img=<?= htmlspecialchars($client['image']) ?>" class="profile-img">
-                <?php else: ?>
-                    <div class="no-img">👤</div>
-                <?php endif; ?>
-                <h2 style="margin: 10px 0 5px 0; color: #222;"><?= htmlspecialchars($client['name']) ?></h2>
-            </div>
-
+        <div class="content">
+            <h2 style="margin-top:0;"><?= htmlspecialchars($client['name']) ?></h2>
+            
             <form method="POST" enctype="multipart/form-data">
-                <label>Adres</label>
-                <input type="text" name="address" value="<?= htmlspecialchars($client['address'] ?? '') ?>" placeholder="Straatnaam 123">
+                <?php foreach ($fields as $field): ?>
+                    <div class="form-group">
+                        <label><?= htmlspecialchars($field['label']) ?></label>
+                        <?php if ($field['type'] == 'image'): ?>
+                            <input type="file" name="<?= $field['field_name'] ?>" accept="image/*">
+                        <?php elseif ($field['type'] == 'number'): ?>
+                            <input type="number" name="<?= $field['field_name'] ?>" placeholder="Vul getal in">
+                        <?php elseif ($field['type'] == 'checkbox'): ?>
+                            <input type="checkbox" name="<?= $field['field_name'] ?>" style="width: 20px; height: 20px;"> Ja
+                        <?php else: ?>
+                            <input type="text" name="<?= $field['field_name'] ?>" placeholder="Typ hier...">
+                        <?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
 
-                <label>Telefoon</label>
-                <input type="tel" name="phone" value="<?= htmlspecialchars($client['phone'] ?? '') ?>" placeholder="06 12345678">
-
-                <label>Foto wijzigen/toevoegen</label>
-                <input type="file" name="image" accept="image/*" style="border: none; padding: 0;">
-
-                <button type="submit" name="save_details" class="btn-save">GEGEVENS OPSLAAN</button>
-				<hr style="border: 0; border-top: 1px solid #eee; margin: 30px 0 20px 0;">
+                <button type="submit" name="save_dynamic" class="btn-save">STAP VOLTOOIEN</button>
             </form>
-			<form method="POST" onsubmit="return confirm('Weet je zeker dat je deze cliënt wilt verwijderen?');">
-				<button type="submit" name="delete_client" 
-						style="width: 100%; background: none; border: 2px solid #dc3545; color: #dc3545; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;">
-					🗑️ CLIËNT VERWIJDEREN
-				</button>
-			</form>
-
         </div>
     </div>
-</div>
-
 </body>
 </html>
