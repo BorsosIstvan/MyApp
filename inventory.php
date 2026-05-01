@@ -2,15 +2,14 @@
 session_start();
 if (!isset($_SESSION['loggedin'])) { header("Location: index.php"); exit; }
 
-// --- PLAK HIER JE GEPUBLICEERDE GOOGLE CSV LINK ---
 $spreadsheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtWDNH9rcTBu1uKNaioH4n4kPQU5CA48S-0IX7Z_fFh1dAyKfhnvCX2qUmw-vQzNu8qQGa/pub?output=csv";
-// ------------------------------------------------
 
 $data = [];
-// We voegen een timeout toe voor het geval Google traag is
-$context = stream_context_create(['http' => ['timeout' => 15]]);
+$context = stream_context_create(['http' => ['timeout' => 10]]);
 
-if ($spreadsheet_url !== "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke25VqYtWDNH9rcTBu1uKNaioH4n4kPQU5CA48S-0IX7Z_fFh1dAyKfhnvCX2qUmw-vQzNu8qQGa/pub?output=csv") {
+// We controleren nu alleen of de URL niet leeg is
+if (!empty($spreadsheet_url)) {
+    // Gebruik 'fopen' met de context om de data op te halen
     if (($handle = fopen($spreadsheet_url, "r", false, $context)) !== FALSE) {
         while (($row = fgetcsv($handle, 1000, ",")) !== FALSE) {
             $data[] = $row;
@@ -19,6 +18,7 @@ if ($spreadsheet_url !== "https://docs.google.com/spreadsheets/d/e/2PACX-1vQkke2
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="nl">
