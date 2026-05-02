@@ -77,16 +77,20 @@ $clients = $db->query("SELECT * FROM clients ORDER BY id DESC")->fetchAll();
 			</div>
 
 			<!-- Formulier om client toe te voegen -->
-			<div class="add-form">
-				<h3>Nieuwe Cliënt</h3>
-				<form method="POST">
-					<?php foreach ($clientFields as $field): ?>
-						<label style="font-size:12px; font-weight:bold;"><?= $field['label'] ?></label>
-						<input type="<?= ($field['type'] == 'number') ? 'number' : 'text' ?>" name="<?= $field['field_name'] ?>" required>
-					<?php endforeach; ?>
-					<button type="submit" name="add_client" class="btn-add">OPSLAAN</button>
-				</form>
-			</div>
+			<!-- Zoek dit blok in projects.php -->
+			<?php if ($_SESSION['user'] === 'admin'): ?>
+				<div class="add-form">
+					<h3>Nieuwe Cliënt</h3>
+					<form method="POST">
+						<?php foreach ($clientFields as $field): ?>
+							<label style="font-size:12px; font-weight:bold;"><?= $field['label'] ?></label>
+							<input type="<?= ($field['type'] == 'number') ? 'number' : 'text' ?>" name="<?= $field['field_name'] ?>" required>
+						<?php endforeach; ?>
+						<button type="submit" name="add_client" class="btn-add">OPSLAAN</button>
+					</form>
+				</div>
+			<?php endif; ?>
+
 
 			<!-- Lijst van clienten -->
 			<div class="list" id="clientList">
