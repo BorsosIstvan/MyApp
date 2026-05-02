@@ -168,10 +168,14 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
             </form>
         </div>
     </div>
-	<!-- Scanner Modal (onzichtbaar tot je op de knop drukt) -->
-	<div id="scanner-container" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
-		<div id="reader" style="width: 300px; background: white; border-radius: 10px; overflow: hidden;"></div>
-		<button type="button" onclick="stopScanner()" style="margin-top:20px; padding:10px 20px; background:#dc3545; color:white; border:none; border-radius:10px;">STOP SCANNER</button>
+	<!-- Scanner Modal -->
+	<div id="scanner-container" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+		<!-- Voeg inline breedte/hoogte toe zodat de library niet op '0' springt -->
+		<div id="reader" style="width: 320px; height: 320px; background: #000; border-radius: 15px; overflow: hidden; border: 2px solid #007bff;"></div>
+		
+		<div style="margin-top: 20px; display: flex; gap: 10px;">
+			<button type="button" onclick="stopScanner()" style="padding:12px 25px; background:#dc3545; color:white; border:none; border-radius:10px; font-weight:bold;">STOP</button>
+		</div>
 	</div>
 	<script>
 	let html5QrCode;
