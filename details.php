@@ -139,7 +139,7 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 							<?php endif; ?>
 							
 							<label style="font-size: 12px; color: #007bff;">Nieuwe foto uploaden:</label>
-							<input type="file" name="<?= $field['field_name'] ?>" accept="image/*">
+							<input type="file" name="<?= $field['field_name'] ?>" accept="image/*" capture="environment">
                             
                         <?php elseif ($field['type'] == 'number'): ?>
                             <input type="number" name="<?= $field['field_name'] ?>" value="<?= htmlspecialchars($currentVal) ?>">
