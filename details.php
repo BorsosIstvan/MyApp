@@ -147,20 +147,21 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
                             
                         <?php elseif ($field['type'] == 'checkbox'): ?>
                             <input type="checkbox" name="<?= $field['field_name'] ?>" value="Ja" <?= ($currentVal == 'Ja') ? 'checked' : '' ?>> Ja
-                            
-                        <?php else: ?>
-							<div style="display: flex; gap: 5px;">
-								<input type="text" id="input_<?= $field['field_name'] ?>" name="<?= $field['field_name'] ?>" value="<?= htmlspecialchars($currentVal) ?>">
-								
-								<?php if (strpos($field['field_name'], 'sn') !== false): ?>
-									<button type="button" onclick="startScanner('input_<?= $field['field_name'] ?>')" 
-											style="background: #007bff; color: white; border: none; border-radius: 8px; padding: 0 10px; font-size: 20px;">
-										📷
-									</button>
-								<?php endif; ?>
-							</div>
-						<?php endif; ?>
-
+                            <?php else: ?>
+								<div style="display: flex; flex-direction: column; gap: 5px;">
+									<input type="text" id="input_<?= $field['field_name'] ?>" name="<?= $field['field_name'] ?>" value="<?= htmlspecialchars($currentVal) ?>">
+									
+									<?php if (strpos($field['field_name'], 'sn') !== false): ?>
+										<!-- Deze knop opent de camera of het album voor de barcode-scan -->
+										<label class="btn-scan" style="background:#007bff; color:white; padding:10px; border-radius:8px; text-align:center; font-weight:bold; cursor:pointer;">
+											📷 SCAN BARCODE (FOTO)
+											<input type="file" accept="image/*" capture="environment" 
+												   onchange="scanFile(this, 'input_<?= $field['field_name'] ?>')" 
+												   style="display:none;">
+										</label>
+									<?php endif; ?>
+								</div>
+							<?php endif; ?>
                     </div>
                 <?php endforeach; ?>
 
@@ -177,49 +178,35 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 			<button type="button" onclick="stopScanner()" style="padding:15px 30px; background:#dc3545; color:white; border:none; border-radius:10px; font-weight:bold;">STOP SCANNER</button>
 		</div>
 	</div>
+	<script src="https://unpkg.com"></script>
 	<script>
-	let html5QrCode;
+	function scanFile(input, targetId) {
+		if (input.files && input.files.length == 0) return;
 
-	function startScanner(targetId) {
-		const container = document.getElementById('scanner-container');
-		container.style.display = 'flex';
+		const html5QrCode = new Html5Qrcode("reader-hidden"); // We gebruiken een verborgen div
+		const imageFile = input.files[0];
 
-		// Geef de browser 300ms de tijd om de UI te tekenen
-		setTimeout(() => {
-			if (!html5QrCode) {
-				html5QrCode = new Html5Qrcode("reader");
-			}
+		// Toon een korte "bezig met laden" melding
+		const targetInput = document.getElementById(targetId);
+		const originalPlaceholder = targetInput.placeholder;
+		targetInput.placeholder = "⌛ Bezig met scannen...";
 
-			const config = { 
-				fps: 10, 
-				qrbox: { width: 250, height: 150 }
-			};
-
-			html5QrCode.start(
-				{ facingMode: "environment" }, 
-				config, 
-				(decodedText) => {
-					document.getElementById(targetId).value = decodedText;
-					if (navigator.vibrate) navigator.vibrate(100);
-					stopScanner();
-				}
-			).catch(err => {
-				alert("Camera Error: " + err);
-				stopScanner();
-			});
-		}, 300);
-	}
-
-	function stopScanner() {
-		if (html5QrCode && html5QrCode.isScanning) {
-			html5QrCode.stop().then(() => {
-				document.getElementById('scanner-container').style.display = 'none';
-			});
-		} else {
-			document.getElementById('scanner-container').style.display = 'none';
-		}
+		html5QrCode.scanFile(imageFile, true)
+		.then(decodedText => {
+			targetInput.value = decodedText;
+			targetInput.placeholder = originalPlaceholder;
+			if (navigator.vibrate) navigator.vibrate(100);
+			alert("Gescand: " + decodedText);
+		})
+		.catch(err => {
+			targetInput.placeholder = originalPlaceholder;
+			alert("Kon geen barcode vinden op de foto. Probeer scherper te focussen.");
+		});
 	}
 	</script>
+
+	<!-- Onzichtbaar element nodig voor de verwerking -->
+	<div id="reader-hidden" style="display:none;"></div>
 
 </body>
 </html>
