@@ -67,6 +67,7 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+	<script src="https://unpkg.com"></script>
     <title>Workflow - <?= htmlspecialchars($current_step) ?></title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #e0e6ed; display: flex; justify-content: center; }
