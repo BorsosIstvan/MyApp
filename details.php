@@ -128,10 +128,17 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
                         <label><?= htmlspecialchars($field['label']) ?></label>
                         
                         <?php if ($field['type'] == 'image'): ?>
-                            <?php if($currentVal): ?>
-                                <p style="font-size:12px; color:green; margin-bottom: 10px;">✅ Foto aanwezig: <a href="show_image.php?img=<?= $currentVal ?>" target="_blank">Bekijk</a></p>
-                            <?php endif; ?>
-                            <input type="file" name="<?= $field['field_name'] ?>" accept="image/*">
+							<?php if($currentVal): ?>
+								<!-- Hier tonen we de foto als hij bestaat -->
+								<div style="margin-bottom: 10px; text-align: center; background: #eee; border-radius: 10px; padding: 10px;">
+									<img src="show_image.php?img=<?= htmlspecialchars($currentVal) ?>" 
+										 style="max-width: 100%; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+									<p style="font-size:11px; color:#666; margin-top:5px;">Huidige foto: <?= htmlspecialchars($currentVal) ?></p>
+								</div>
+							<?php endif; ?>
+							
+							<label style="font-size: 12px; color: #007bff;">Nieuwe foto uploaden:</label>
+							<input type="file" name="<?= $field['field_name'] ?>" accept="image/*">
                             
                         <?php elseif ($field['type'] == 'number'): ?>
                             <input type="number" name="<?= $field['field_name'] ?>" value="<?= htmlspecialchars($currentVal) ?>">
