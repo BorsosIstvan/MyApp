@@ -180,29 +180,28 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 	</div>
 	<script src="https://unpkg.com"></script>
 	<script>
-	function scanFile(input, targetId) {
-		if (input.files && input.files.length == 0) return;
+		function scanFile(input, targetId) {
+			if (!input.files || input.files.length == 0) return;
 
-		const html5QrCode = new Html5Qrcode("reader-hidden"); // We gebruiken een verborgen div
-		const imageFile = input.files[0];
+			const html5QrCode = new Html5Qrcode("reader-hidden");
+			const imageFile = input.files[0]; // Pak het eerste bestand
 
-		// Toon een korte "bezig met laden" melding
-		const targetInput = document.getElementById(targetId);
-		const originalPlaceholder = targetInput.placeholder;
-		targetInput.placeholder = "⌛ Bezig met scannen...";
+			const targetInput = document.getElementById(targetId);
+			targetInput.placeholder = "⌛ Scannen... Houd de barcode recht!";
 
-		html5QrCode.scanFile(imageFile, true)
-		.then(decodedText => {
-			targetInput.value = decodedText;
-			targetInput.placeholder = originalPlaceholder;
-			if (navigator.vibrate) navigator.vibrate(100);
-			alert("Gescand: " + decodedText);
-		})
-		.catch(err => {
-			targetInput.placeholder = originalPlaceholder;
-			alert("Kon geen barcode vinden op de foto. Probeer scherper te focussen.");
-		});
-	}
+			// Gebruik experimentele functies voor betere barcode herkenning
+			html5QrCode.scanFileV2(imageFile, false)
+			.then(decodedResult => {
+				const decodedText = decodedResult.decodedText;
+				targetInput.value = decodedText;
+				if (navigator.vibrate) navigator.vibrate(100);
+				alert("Gescand: " + decodedText);
+			})
+			.catch(err => {
+				console.error(err);
+				alert("Barcode niet gevonden. Tips:\n- Zorg voor veel licht.\n- Houd de camera stil.\n- Zorg dat de hele barcode in beeld is.");
+			});
+		}
 	</script>
 
 	<!-- Onzichtbaar element nodig voor de verwerking -->
