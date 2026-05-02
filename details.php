@@ -68,7 +68,7 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Workflow - <?= htmlspecialchars($current_step) ?></title>
-	<script src="https://unpkg.com"></script>
+	<script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #e0e6ed; display: flex; justify-content: center; }
         .phone-wrapper { width: 100%; max-width: 450px; min-height: 100vh; background-color: #f4f7f9; box-shadow: 0 0 20px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
@@ -183,24 +183,31 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 		function scanFile(input, targetId) {
 			if (!input.files || input.files.length == 0) return;
 
-			const html5QrCode = new Html5Qrcode("reader-hidden");
-			const imageFile = input.files[0]; // Pak het eerste bestand
-
 			const targetInput = document.getElementById(targetId);
-			targetInput.placeholder = "⌛ Scannen... Houd de barcode recht!";
+			targetInput.placeholder = "⌛ Bezig met analyseren...";
 
-			// Gebruik experimentele functies voor betere barcode herkenning
-			html5QrCode.scanFileV2(imageFile, false)
-			.then(decodedResult => {
-				const decodedText = decodedResult.decodedText;
-				targetInput.value = decodedText;
-				if (navigator.vibrate) navigator.vibrate(100);
-				alert("Gescand: " + decodedText);
-			})
-			.catch(err => {
-				console.error(err);
-				alert("Barcode niet gevonden. Tips:\n- Zorg voor veel licht.\n- Houd de camera stil.\n- Zorg dat de hele barcode in beeld is.");
-			});
+			// Maak een tijdelijke URL voor de foto
+			const reader = new FileReader();
+			reader.onload = function(e) {
+				Quagga.decodeSingle({
+					src: e.target.result,
+					locate: true, // Zoekt de barcode op de foto
+					decoder: {
+						readers: ["code_128_reader", "ean_reader", "code_39_reader"] // Meest voorkomende serienummers
+					},
+					inputStream: { size: 800 } // Verkleint de foto iets voor snellere verwerking
+				}, function(result) {
+					if (result && result.codeResult) {
+						targetInput.value = result.codeResult.code;
+						if (navigator.vibrate) navigator.vibrate(100);
+						alert("Gescand: " + result.codeResult.code);
+					} else {
+						alert("Geen barcode herkend. Probeer de foto rechter en scherper te maken.");
+					}
+					targetInput.placeholder = "";
+				});
+			};
+			reader.readAsDataURL(input.files[0]);
 		}
 	</script>
 
