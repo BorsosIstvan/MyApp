@@ -173,43 +173,58 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 		<div id="reader" style="width: 300px; background: white; border-radius: 10px; overflow: hidden;"></div>
 		<button type="button" onclick="stopScanner()" style="margin-top:20px; padding:10px 20px; background:#dc3545; color:white; border:none; border-radius:10px;">STOP SCANNER</button>
 	</div>
-
 	<script>
 	let html5QrCode;
 	let currentTargetId;
 
-	function startScanner(targetId) {
+	async function startScanner(targetId) {
 		currentTargetId = targetId;
-		const scannerContainer = document.getElementById('scanner-container');
-		scannerContainer.style.display = 'flex';
+		document.getElementById('scanner-container').style.display = 'flex';
 		
-		// Maak de scanner instantie
-		html5QrCode = new Html5Qrcode("reader");
+		if (!html5QrCode) {
+			html5QrCode = new Html5Qrcode("reader");
+		}
 
-		const config = { 
-			fps: 10, 
-			qrbox: { width: 250, height: 150 },
-			aspectRatio: 1.0 
-		};
+		try {
+			// Vraag eerst alle beschikbare camera's op
+			const devices = await Html5Qrcode.getCameras();
+			
+			if (devices && devices.length > 0) {
+				// Zoek naar de achtercamera (vaak 'back', 'rear' of 'achter')
+				let cameraId = devices[0].id; // Standaard de eerste
+				for (const device of devices) {
+					if (device.label.toLowerCase().includes('back') || 
+						device.label.toLowerCase().includes('rear') ||
+						device.label.toLowerCase().includes('achter')) {
+						cameraId = device.id;
+						break;
+					}
+				}
 
-		// Start de camera
-		html5QrCode.start(
-			{ facingMode: "environment" }, 
-			config, 
-			(decodedText) => {
-				// Succes: Barcode gevonden
-				document.getElementById(currentTargetId).value = decodedText;
+				const config = { 
+					fps: 15, 
+					qrbox: { width: 250, height: 200 } 
+				};
+
+				await html5QrCode.start(
+					cameraId, 
+					config, 
+					(decodedText) => {
+						document.getElementById(currentTargetId).value = decodedText;
+						stopScanner();
+						// Speel een kort geluidje af of tril (optioneel)
+						if (navigator.vibrate) navigator.vibrate(100);
+					}
+				);
+			} else {
+				alert("Geen camera's gevonden op dit apparaat.");
 				stopScanner();
-			},
-			(errorMessage) => {
-				// Dit negeren we: het scannen is nog bezig
 			}
-		).catch((err) => {
-			// Fout bij het openen van de camera
-			console.error("Camera fout:", err);
-			alert("Kan camera niet openen. Controleer of je de app toestemming hebt gegeven voor de camera.");
+		} catch (err) {
+			console.error("Scanner Error:", err);
+			alert("Camera fout: " + err);
 			stopScanner();
-		});
+		}
 	}
 
 	function stopScanner() {
@@ -224,6 +239,5 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 		}
 	}
 	</script>
-
 </body>
 </html>
