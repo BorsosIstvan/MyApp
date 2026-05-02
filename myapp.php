@@ -5,6 +5,7 @@ if (!isset($_SESSION['loggedin'])) {
     exit;
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -151,6 +152,12 @@ if (!isset($_SESSION['loggedin'])) {
 		</header>
 
         <div class="menu-grid">
+			<?php if ($_SESSION['user'] === 'admin'): ?>
+				<a href="admin.php" class="menu-item" style="border-top: 5px solid #6c757d;">
+					<div class="icon">⚙️</div>
+					<span>Instellingen</span>
+				</a>
+			<?php endif; ?>
             <a href="projects.php" class="menu-item projects">
                 <div class="icon">📂</div>
                 <span>Projecten</span>
