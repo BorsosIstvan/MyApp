@@ -1,30 +1,31 @@
 <?php
 session_start();
-if (!isset($_SESSION['loggedin'])) {
-    header("Location: index.php");
-    exit;
-}
-?>
+if (!isset($_SESSION['loggedin'])) { header("Location: index.php"); exit; }
 
-<?php
-// Verbinding met de gloednieuwe database
 $db = new PDO('sqlite:/var/www/html/MyData/data.db');
 $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-// Maak de tabel aan als deze nog niet bestaat
-$db->exec("CREATE TABLE IF NOT EXISTS clients (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, 
-    name TEXT, 
-    address TEXT, 
-    phone TEXT, 
-    image TEXT
-)");
+// Haal configuratie voor cliënt-gegevens op
+$stmtConfig = $db->query("SELECT * FROM config WHERE step_name = 'CLIËNT'");
+$clientFields = $stmtConfig->fetchAll();
 
-// Nieuwe client opslaan
+// Nieuwe cliënt aanmaken
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_client'])) {
-    $name = $_POST['name'];
-    $stmt = $db->prepare("INSERT INTO clients (name) VALUES (?)");
-    $stmt->execute([$name]);
+    // Maak eerst een lege cliënt aan om een ID te krijgen
+    $db->exec("INSERT INTO clients (name) VALUES ('Nieuwe Cliënt')");
+    $newId = $db->lastInsertId();
+    $mainName = "";
+
+    foreach ($clientFields as $field) {
+        $val = $_POST[$field['field_name']] ?? '';
+        if ($field['field_name'] == 'client_name') $mainName = $val;
+
+        $stmt = $db->prepare("INSERT INTO project_results (client_id, field_name, value, step_name) VALUES (?, ?, ?, 'CLIËNT')");
+        $stmt->execute([$newId, $field['field_name'], $val]);
+    }
+    
+    // Update de hoofdnaam voor de lijst
+    $db->prepare("UPDATE clients SET name = ? WHERE id = ?")->execute([$mainName, $newId]);
     header("Location: projects.php");
     exit();
 }
@@ -77,9 +78,13 @@ $clients = $db->query("SELECT * FROM clients ORDER BY id DESC")->fetchAll();
 
 			<!-- Formulier om client toe te voegen -->
 			<div class="add-form">
+				<h3>Nieuwe Cliënt</h3>
 				<form method="POST">
-					<input type="text" name="name" placeholder="Naam nieuwe client..." required>
-					<button type="submit" name="add_client" class="btn-add">+ Toevoegen</button>
+					<?php foreach ($clientFields as $field): ?>
+						<label style="font-size:12px; font-weight:bold;"><?= $field['label'] ?></label>
+						<input type="<?= ($field['type'] == 'number') ? 'number' : 'text' ?>" name="<?= $field['field_name'] ?>" required>
+					<?php endforeach; ?>
+					<button type="submit" name="add_client" class="btn-add">OPSLAAN</button>
 				</form>
 			</div>
 
