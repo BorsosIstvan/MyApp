@@ -170,10 +170,10 @@ if (!isset($_SESSION['loggedin'])) {
                 <div class="icon">💬</div>
                 <span>Berichten</span>
             </a>
-            <a href="under-construction.php?p=doelen" class="menu-item goals">
-                <div class="icon">🎯</div>
-                <span>Doelen</span>
-            </a>
+            <a href="reports_list.php" class="menu-item goals">
+				<div class="icon">🎯</div>
+				<span>Rapporten</span>
+			</a>
         </div>
 
     </div>
