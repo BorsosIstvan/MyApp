@@ -31,6 +31,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_client'])) {
 }
 
 $clients = $db->query("SELECT * FROM clients ORDER BY id DESC")->fetchAll();
+// Cliënt verwijderen (alleen voor admin)
+if (isset($_GET['delete_id']) && $_SESSION['user'] === 'admin') {
+    $delId = $_GET['delete_id'];
+    // Verwijder resultaten en de cliënt zelf
+    $db->prepare("DELETE FROM project_results WHERE client_id = ?")->execute([$delId]);
+    $db->prepare("DELETE FROM clients WHERE id = ?")->execute([$delId]);
+    header("Location: projects.php");
+    exit();
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -97,10 +107,23 @@ $clients = $db->query("SELECT * FROM clients ORDER BY id DESC")->fetchAll();
 				<?php foreach ($clients as $client): ?>
 					<div class="client-card" data-name="<?= strtolower(htmlspecialchars($client['name'])) ?>">
 						<span class="client-info"><?= htmlspecialchars($client['name']) ?></span>
-						<a href="details.php?id=<?= $client['id'] ?>" class="btn-view">OPEN</a>
+						
+						<div style="display: flex; gap: 5px;">
+							<a href="details.php?id=<?= $client['id'] ?>" class="btn-view">OPEN</a>
+							
+							<?php if ($_SESSION['user'] === 'admin'): ?>
+								<a href="projects.php?delete_id=<?= $client['id'] ?>" 
+								   class="btn-view" 
+								   style="background: #ffebeb; color: #dc3545;" 
+								   onclick="return confirm('Cliënt verwijderen?')">
+								   DEL
+								</a>
+							<?php endif; ?>
+						</div>
 					</div>
 				<?php endforeach; ?>
 			</div>
+
 		</div>
 
 		<script>

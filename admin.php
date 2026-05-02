@@ -19,18 +19,6 @@ if (isset($_GET['del'])) {
 }
 
 $config = $db->query("SELECT * FROM config ORDER BY step_name, id")->fetchAll();
-
-// Cliënt verwijderen via admin
-if (isset($_GET['del_client'])) {
-    $clientId = $_GET['del_client'];
-    // 1. Verwijder alle resultaten/foto-namen uit project_results
-    // (Optioneel: je zou hier ook de fysieke foto's kunnen unlinken)
-    $db->prepare("DELETE FROM project_results WHERE client_id = ?")->execute([$clientId]);
-    // 2. Verwijder de cliënt zelf
-    $db->prepare("DELETE FROM clients WHERE id = ?")->execute([$clientId]);
-    header("Location: admin.php?success=client_deleted"); exit;
-}
-
 ?>
 
 <!DOCTYPE html>
@@ -58,28 +46,6 @@ if (isset($_GET['del_client'])) {
         <strong>APP CONFIGURATIE</strong>
         <div style="width:20px;"></div>
     </header>
-	<div class="card">
-		<h3>Cliënten Beheren</h3>
-		<table>
-			<tr><th>Naam</th><th>Actie</th></tr>
-			<?php 
-			$allClients = $db->query("SELECT * FROM clients ORDER BY name ASC")->fetchAll();
-			foreach ($allClients as $cli): 
-			?>
-			<tr>
-				<td><?= htmlspecialchars($cli['name']) ?></td>
-				<td>
-					<a href="admin.php?del_client=<?= $cli['id'] ?>" 
-					   class="del-btn" 
-					   onclick="return confirm('WEET JE HET ZEKER? Alle data en foto\'s van deze cliënt gaan verloren!')">
-					   VERWIJDEREN
-					</a>
-				</td>
-			</tr>
-			<?php endforeach; ?>
-		</table>
-	</div>
-
 
     <div class="card">
         <h3>Nieuw veld toevoegen</h3>
