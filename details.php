@@ -180,22 +180,43 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 
 	function startScanner(targetId) {
 		currentTargetId = targetId;
-		document.getElementById('scanner-container').style.display = 'flex';
+		const scannerContainer = document.getElementById('scanner-container');
+		scannerContainer.style.display = 'flex';
 		
+		// Maak de scanner instantie
 		html5QrCode = new Html5Qrcode("reader");
-		const config = { fps: 10, qrbox: { width: 250, height: 150 } };
 
-		html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
-			// Wat er gebeurt als een barcode gevonden is:
-			document.getElementById(currentTargetId).value = decodedText;
+		const config = { 
+			fps: 10, 
+			qrbox: { width: 250, height: 150 },
+			aspectRatio: 1.0 
+		};
+
+		// Start de camera
+		html5QrCode.start(
+			{ facingMode: "environment" }, 
+			config, 
+			(decodedText) => {
+				// Succes: Barcode gevonden
+				document.getElementById(currentTargetId).value = decodedText;
+				stopScanner();
+			},
+			(errorMessage) => {
+				// Dit negeren we: het scannen is nog bezig
+			}
+		).catch((err) => {
+			// Fout bij het openen van de camera
+			console.error("Camera fout:", err);
+			alert("Kan camera niet openen. Controleer of je de app toestemming hebt gegeven voor de camera.");
 			stopScanner();
-			alert("Barcode gescand: " + decodedText);
 		});
 	}
 
 	function stopScanner() {
-		if (html5QrCode) {
+		if (html5QrCode && html5QrCode.isScanning) {
 			html5QrCode.stop().then(() => {
+				document.getElementById('scanner-container').style.display = 'none';
+			}).catch(err => {
 				document.getElementById('scanner-container').style.display = 'none';
 			});
 		} else {
