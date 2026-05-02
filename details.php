@@ -68,6 +68,7 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Workflow - <?= htmlspecialchars($current_step) ?></title>
+	<script src="https://unpkg.com"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #e0e6ed; display: flex; justify-content: center; }
         .phone-wrapper { width: 100%; max-width: 450px; min-height: 100vh; background-color: #f4f7f9; box-shadow: 0 0 20px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
@@ -148,9 +149,18 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
                             <input type="checkbox" name="<?= $field['field_name'] ?>" value="Ja" <?= ($currentVal == 'Ja') ? 'checked' : '' ?>> Ja
                             
                         <?php else: ?>
-                            <input type="text" name="<?= $field['field_name'] ?>" value="<?= htmlspecialchars($currentVal) ?>">
-                            
-                        <?php endif; ?>
+							<div style="display: flex; gap: 5px;">
+								<input type="text" id="input_<?= $field['field_name'] ?>" name="<?= $field['field_name'] ?>" value="<?= htmlspecialchars($currentVal) ?>">
+								
+								<?php if (strpos($field['field_name'], 'sn') !== false): ?>
+									<button type="button" onclick="startScanner('input_<?= $field['field_name'] ?>')" 
+											style="background: #007bff; color: white; border: none; border-radius: 8px; padding: 0 10px; font-size: 20px;">
+										📷
+									</button>
+								<?php endif; ?>
+							</div>
+						<?php endif; ?>
+
                     </div>
                 <?php endforeach; ?>
 
@@ -158,5 +168,41 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
             </form>
         </div>
     </div>
+	<!-- Scanner Modal (onzichtbaar tot je op de knop drukt) -->
+	<div id="scanner-container" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+		<div id="reader" style="width: 300px; background: white; border-radius: 10px; overflow: hidden;"></div>
+		<button type="button" onclick="stopScanner()" style="margin-top:20px; padding:10px 20px; background:#dc3545; color:white; border:none; border-radius:10px;">STOP SCANNER</button>
+	</div>
+
+	<script>
+	let html5QrCode;
+	let currentTargetId;
+
+	function startScanner(targetId) {
+		currentTargetId = targetId;
+		document.getElementById('scanner-container').style.display = 'flex';
+		
+		html5QrCode = new Html5Qrcode("reader");
+		const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+
+		html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+			// Wat er gebeurt als een barcode gevonden is:
+			document.getElementById(currentTargetId).value = decodedText;
+			stopScanner();
+			alert("Barcode gescand: " + decodedText);
+		});
+	}
+
+	function stopScanner() {
+		if (html5QrCode) {
+			html5QrCode.stop().then(() => {
+				document.getElementById('scanner-container').style.display = 'none';
+			});
+		} else {
+			document.getElementById('scanner-container').style.display = 'none';
+		}
+	}
+	</script>
+
 </body>
 </html>
