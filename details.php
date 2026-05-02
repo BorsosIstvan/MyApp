@@ -105,7 +105,8 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 
             <!-- Stappen Navigatie Menu -->
             <div class="nav-steps">
-                <?php foreach ($allSteps as $s): 
+                <?php foreach ($allSteps as $s):
+					if ($s === 'CLIËNT') continue;
                     $active = ($s == $current_step) ? 'background: #007bff; color: white;' : 'background: #fff; color: #555;';
                 ?>
                     <a href="details.php?id=<?= $id ?>&step=<?= urlencode($s) ?>" class="step-link" style="<?= $active ?>">
