@@ -58,6 +58,28 @@ if (isset($_GET['del_client'])) {
         <strong>APP CONFIGURATIE</strong>
         <div style="width:20px;"></div>
     </header>
+	<div class="card">
+		<h3>Cliënten Beheren</h3>
+		<table>
+			<tr><th>Naam</th><th>Actie</th></tr>
+			<?php 
+			$allClients = $db->query("SELECT * FROM clients ORDER BY name ASC")->fetchAll();
+			foreach ($allClients as $cli): 
+			?>
+			<tr>
+				<td><?= htmlspecialchars($cli['name']) ?></td>
+				<td>
+					<a href="admin.php?del_client=<?= $cli['id'] ?>" 
+					   class="del-btn" 
+					   onclick="return confirm('WEET JE HET ZEKER? Alle data en foto\'s van deze cliënt gaan verloren!')">
+					   VERWIJDEREN
+					</a>
+				</td>
+			</tr>
+			<?php endforeach; ?>
+		</table>
+	</div>
+
 
     <div class="card">
         <h3>Nieuw veld toevoegen</h3>
