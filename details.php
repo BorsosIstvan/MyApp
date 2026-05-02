@@ -169,73 +169,50 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
         </div>
     </div>
 	<!-- Scanner Modal -->
-	<div id="scanner-container" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
-		<!-- Voeg inline breedte/hoogte toe zodat de library niet op '0' springt -->
-		<div id="reader" style="width: 320px; height: 320px; background: #000; border-radius: 15px; overflow: hidden; border: 2px solid #007bff;"></div>
+	<div id="scanner-container" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#000; z-index:9999; flex-direction:column; align-items:center; justify-content:center;">
+		<!-- Het video element waar de camera in verschijnt -->
+		<div id="reader" style="width: 100%; max-width: 400px; height: 300px; background: #000;"></div>
 		
-		<div style="margin-top: 20px; display: flex; gap: 10px;">
-			<button type="button" onclick="stopScanner()" style="padding:12px 25px; background:#dc3545; color:white; border:none; border-radius:10px; font-weight:bold;">STOP</button>
+		<div style="margin-top: 20px;">
+			<button type="button" onclick="stopScanner()" style="padding:15px 30px; background:#dc3545; color:white; border:none; border-radius:10px; font-weight:bold;">STOP SCANNER</button>
 		</div>
 	</div>
 	<script>
 	let html5QrCode;
-	let currentTargetId;
 
-	async function startScanner(targetId) {
-		currentTargetId = targetId;
-		document.getElementById('scanner-container').style.display = 'flex';
-		
-		if (!html5QrCode) {
-			html5QrCode = new Html5Qrcode("reader");
-		}
+	function startScanner(targetId) {
+		const container = document.getElementById('scanner-container');
+		container.style.display = 'flex';
 
-		try {
-			// Vraag eerst alle beschikbare camera's op
-			const devices = await Html5Qrcode.getCameras();
-			
-			if (devices && devices.length > 0) {
-				// Zoek naar de achtercamera (vaak 'back', 'rear' of 'achter')
-				let cameraId = devices[0].id; // Standaard de eerste
-				for (const device of devices) {
-					if (device.label.toLowerCase().includes('back') || 
-						device.label.toLowerCase().includes('rear') ||
-						device.label.toLowerCase().includes('achter')) {
-						cameraId = device.id;
-						break;
-					}
-				}
-
-				const config = { 
-					fps: 15, 
-					qrbox: { width: 250, height: 200 } 
-				};
-
-				await html5QrCode.start(
-					cameraId, 
-					config, 
-					(decodedText) => {
-						document.getElementById(currentTargetId).value = decodedText;
-						stopScanner();
-						// Speel een kort geluidje af of tril (optioneel)
-						if (navigator.vibrate) navigator.vibrate(100);
-					}
-				);
-			} else {
-				alert("Geen camera's gevonden op dit apparaat.");
-				stopScanner();
+		// Geef de browser 300ms de tijd om de UI te tekenen
+		setTimeout(() => {
+			if (!html5QrCode) {
+				html5QrCode = new Html5Qrcode("reader");
 			}
-		} catch (err) {
-			console.error("Scanner Error:", err);
-			alert("Camera fout: " + err);
-			stopScanner();
-		}
+
+			const config = { 
+				fps: 10, 
+				qrbox: { width: 250, height: 150 }
+			};
+
+			html5QrCode.start(
+				{ facingMode: "environment" }, 
+				config, 
+				(decodedText) => {
+					document.getElementById(targetId).value = decodedText;
+					if (navigator.vibrate) navigator.vibrate(100);
+					stopScanner();
+				}
+			).catch(err => {
+				alert("Camera Error: " + err);
+				stopScanner();
+			});
+		}, 300);
 	}
 
 	function stopScanner() {
 		if (html5QrCode && html5QrCode.isScanning) {
 			html5QrCode.stop().then(() => {
-				document.getElementById('scanner-container').style.display = 'none';
-			}).catch(err => {
 				document.getElementById('scanner-container').style.display = 'none';
 			});
 		} else {
@@ -243,5 +220,6 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 		}
 	}
 	</script>
+
 </body>
 </html>
