@@ -68,7 +68,6 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Workflow - <?= htmlspecialchars($current_step) ?></title>
-	<script src="https://unpkg.com"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #e0e6ed; display: flex; justify-content: center; }
         .phone-wrapper { width: 100%; max-width: 450px; min-height: 100vh; background-color: #f4f7f9; box-shadow: 0 0 20px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
@@ -180,30 +179,60 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 	</div>
 	<script src="https://unpkg.com"></script>
 	<script>
-		function scanFile(input, targetId) {
-			if (!input.files || input.files.length == 0) return;
+	let html5QrCode;
 
-			const html5QrCode = new Html5Qrcode("reader-hidden");
-			const imageFile = input.files[0]; // Pak het eerste bestand
-
-			const targetInput = document.getElementById(targetId);
-			targetInput.placeholder = "⌛ Scannen... Houd de barcode recht!";
-
-			// Gebruik experimentele functies voor betere barcode herkenning
-			html5QrCode.scanFileV2(imageFile, false)
-			.then(decodedResult => {
-				const decodedText = decodedResult.decodedText;
-				targetInput.value = decodedText;
-				if (navigator.vibrate) navigator.vibrate(100);
-				alert("Gescand: " + decodedText);
-			})
-			.catch(err => {
-				console.error(err);
-				alert("Barcode niet gevonden. Tips:\n- Zorg voor veel licht.\n- Houd de camera stil.\n- Zorg dat de hele barcode in beeld is.");
-			});
+	async function startScanner(targetId) {
+		const container = document.getElementById('scanner-container');
+		container.style.display = 'flex';
+		
+		// Altijd eerst een oude instance opruimen om conflicten te voorkomen
+		if (html5QrCode) {
+			try { await html5QrCode.stop(); } catch(e) {}
 		}
-	</script>
+		
+		html5QrCode = new Html5Qrcode("reader", { verbose: false });
 
+		const config = { 
+			fps: 15, 
+			qrbox: { width: 250, height: 150 },
+			aspectRatio: 1.0
+		};
+
+		// We dwingen de achtercamera af met 'exact' voor Android
+		// En voegen 'video' attributen toe via de bibliotheek
+		html5QrCode.start(
+			{ facingMode: "environment" }, 
+			config, 
+			(decodedText) => {
+				document.getElementById(targetId).value = decodedText;
+				if (navigator.vibrate) navigator.vibrate(100);
+				stopScanner();
+			}
+		).catch(err => {
+			console.error("Camera start fout:", err);
+			// Fallback: Als 'environment' faalt, probeer de algemene camera
+			html5QrCode.start({ facingMode: "user" }, config, (text) => {
+				document.getElementById(targetId).value = text;
+				stopScanner();
+			}).catch(e => {
+				alert("Camera geblokkeerd of niet gevonden. Gebruik de foto-knop.");
+				stopScanner();
+			});
+		});
+	}
+
+	function stopScanner() {
+		if (html5QrCode) {
+			html5QrCode.stop().then(() => {
+				document.getElementById('scanner-container').style.display = 'none';
+			}).catch(() => {
+				document.getElementById('scanner-container').style.display = 'none';
+			});
+		} else {
+			document.getElementById('scanner-container').style.display = 'none';
+		}
+	}
+	</script>
 	<!-- Onzichtbaar element nodig voor de verwerking -->
 	<div id="reader-hidden" style="display:none;"></div>
 
