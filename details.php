@@ -134,44 +134,20 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
             </form>
         </div>
     </div>
-	<script>
-	let html5QrCode;
 
-	function startScanner(targetId) {
-		// 1. Toon eerst de modal
-		document.getElementById('scanner-modal').style.display = 'flex';
-		
-		// 2. Initialiseer de scanner op het element met id="reader"
-		html5QrCode = new Html5Qrcode("reader");
-		
-		// 3. Start de camera
-		html5QrCode.start(
-			{ facingMode: "environment" }, // Dit is de camera selectie
-			{ 
-				fps: 10, 
-				qrbox: { width: 250, height: 250 } // Optioneel: box verfijnen
-			,
-			(text) => { 
-				// Succes: vul het veld in en stop
-				document.getElementById(targetId).value = text; 
-				stopScanner(); 
-			}
-		).catch(err => { 
-			console.error("Camera fout:", err);
-			alert("Camera fout: " + err); 
-			stopScanner(); 
-		});
-	}
-
-	function stopScanner() {
-		if (html5QrCode && html5QrCode.isScanning) {
-			html5QrCode.stop().then(() => {
-				document.getElementById('scanner-modal').style.display = 'none';
-			}).catch(err => console.error("Fout bij stoppen:", err));
-		} else {
-			document.getElementById('scanner-modal').style.display = 'none';
-		}
-	}
-	</script>
+    <script>
+    let html5QrCode;
+    function startScanner(targetId) {
+        document.getElementById('scanner-modal').style.display = 'flex';
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
+            (text) => { document.getElementById(targetId).value = text; stopScanner(); }
+        ).catch(err => { alert("Camera fout: " + err); stopScanner(); });
+    }
+    function stopScanner() {
+        if (html5QrCode) { html5QrCode.stop().then(() => { document.getElementById('scanner-modal').style.display = 'none'; }); }
+        else { document.getElementById('scanner-modal').style.display = 'none'; }
+    }
+    </script>
 </body>
 </html>
