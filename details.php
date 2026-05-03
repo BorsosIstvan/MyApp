@@ -55,7 +55,7 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Workflow - <?= htmlspecialchars($current_step) ?></title>
     <!-- JUISTE BIBLIOTHEEK LINK -->
-    <script src="https://unpkg.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #e0e6ed; display: flex; justify-content: center; }
         .phone-wrapper { width: 100%; max-width: 450px; min-height: 100vh; background-color: #f4f7f9; display: flex; flex-direction: column; }
@@ -161,7 +161,6 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 			}
 		).catch(err => {
 			alert("Camera fout: " + err);
-			document.getElementById(targetId).value = "ERROR: " + err;
 			stopScanner();
 		});
 	}
