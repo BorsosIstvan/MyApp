@@ -134,25 +134,40 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
             </form>
         </div>
     </div>
-	<script src="https://unpkg.com"></script>
     <script>
-		const codeReader = new ZXing.BrowserMultiFormatReader();
-
-		function startScanner(targetId) {
-			document.getElementById('scanner-modal').style.display = 'flex';
-
-			codeReader.decodeFromVideoDevice(null, 'reader', (result, err) => {
-				if (result) {
-					document.getElementById(targetId).value = result.text;
-					stopScanner();
-				}
-			});
-		}
-
-		function stopScanner() {
-			codeReader.reset();
-			document.getElementById('scanner-modal').style.display = 'none';
-		}
+    let html5QrCode;
+	function startScanner(targetId) {
+		// Toon de modal
+		document.getElementById('scanner-modal').style.display = 'flex';
+		
+		// Initialiseer de scanner
+		html5QrCode = new Html5Qrcode("reader");
+		
+		// Start de camera
+		html5QrCode.start(
+			{ facingMode: "environment" }, // Gebruik achtercamera
+			{ 
+				fps: 10, 
+				qrbox: { width: 250, height: 250 } 
+			},
+			(decodedText) => {
+				// Succes: vul het juiste inputveld in
+				document.getElementById(targetId).value = decodedText;
+				stopScanner();
+			},
+			(errorMessage) => {
+				// Dit zijn foutjes tijdens het scannen (bijv. geen QR in beeld), 
+				// deze negeren we om de console schoon te houden.
+			}
+		).catch(err => {
+			alert("Camera fout: " + err);
+			stopScanner();
+		});
+	}
+    function stopScanner() {
+        if (html5QrCode) { html5QrCode.stop().then(() => { document.getElementById('scanner-modal').style.display = 'none'; }); }
+        else { document.getElementById('scanner-modal').style.display = 'none'; }
+    }
     </script>
 </body>
 </html>
