@@ -161,6 +161,7 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
 			}
 		).catch(err => {
 			alert("Camera fout: " + err);
+			document.getElementById(targetId).value = "ERROR: " + err;
 			stopScanner();
 		});
 	}
