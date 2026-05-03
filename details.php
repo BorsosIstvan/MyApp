@@ -55,7 +55,7 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Workflow - <?= htmlspecialchars($current_step) ?></title>
     <!-- JUISTE BIBLIOTHEEK LINK -->
-    <script src="https://unpkg.com"></script>
+    <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #e0e6ed; display: flex; justify-content: center; }
         .phone-wrapper { width: 100%; max-width: 450px; min-height: 100vh; background-color: #f4f7f9; display: flex; flex-direction: column; }
@@ -135,39 +135,40 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
         </div>
     </div>
     <script>
-    let html5QrCode;
 	function startScanner(targetId) {
-		// Toon de modal
-		document.getElementById('scanner-modal').style.display = 'flex';
-		
-		// Initialiseer de scanner
-		html5QrCode = new Html5Qrcode("reader");
-		
-		// Start de camera
-		html5QrCode.start(
-			{ facingMode: "environment" }, // Gebruik achtercamera
-			{ 
-				fps: 10, 
-				qrbox: { width: 250, height: 250 } 
-			},
-			(decodedText) => {
-				// Succes: vul het juiste inputveld in
-				document.getElementById(targetId).value = decodedText;
-				stopScanner();
-			},
-			(errorMessage) => {
-				// Dit zijn foutjes tijdens het scannen (bijv. geen QR in beeld), 
-				// deze negeren we om de console schoon te houden.
-			}
-		).catch(err => {
-			alert("Camera fout: " + err);
-			stopScanner();
-		});
-	}
-    function stopScanner() {
-        if (html5QrCode) { html5QrCode.stop().then(() => { document.getElementById('scanner-modal').style.display = 'none'; }); }
-        else { document.getElementById('scanner-modal').style.display = 'none'; }
-    }
+    document.getElementById('scanner-modal').style.display = 'flex';
+
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: document.querySelector('#reader'), // Waar de video komt
+            constraints: {
+                facingMode: "environment" // Achtercamera
+            },
+        },
+        decoder: {
+            readers: ["code_128_reader", "ean_reader", "ean_8_reader", "code_39_reader"] 
+        }
+    }, function(err) {
+        if (err) {
+            console.log(err);
+            alert("Camera fout: " + err);
+            return;
+        }
+        Quagga.start();
+    });
+
+    Quagga.onDetected(function(data) {
+        document.getElementById(targetId).value = data.codeResult.code;
+        stopScanner();
+    });
+}
+
+function stopScanner() {
+    Quagga.stop();
+    document.getElementById('scanner-modal').style.display = 'none';
+}
     </script>
 </body>
 </html>
