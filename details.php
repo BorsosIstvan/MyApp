@@ -140,7 +140,8 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
     function startScanner(targetId) {
         document.getElementById('scanner-modal').style.display = 'flex';
         html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
+        html5QrCode.start({ facingMode: "environment" }, {videoConstraints: {
+		facingMode: { exact: "environment" }}, { fps: 10, qrbox: 250 },
             (text) => { document.getElementById(targetId).value = text; stopScanner(); }
         ).catch(err => { alert("Camera fout: " + err); stopScanner(); });
     }
