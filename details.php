@@ -134,7 +134,7 @@ $percentage = ($totalFields > 0) ? round(($filledFields / $totalFields) * 100) :
             </form>
         </div>
     </div>
-
+	<script src="https://unpkg.com"></script>
     <script>
     let html5QrCode;
     function startScanner(targetId) {
