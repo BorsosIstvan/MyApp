@@ -47,14 +47,21 @@ $test_songs = [
         // Maak de unieke link die de telefoon straks moet openen
         $unieke_link = $server_url . $id;
         
-        // Gebruik de officiële bibliotheek om de QR-code bitstream te genereren in het geheugen
+        // 1. Start de buffer om de afbeelding op te vangen
         ob_start();
-        // Parameters: QRcode::png(tekst, bestand=null, foutcorrectie=L, pixelgrootte=6, marge=2)
+        
+        // 2. Genereer de QR-code bitstream in het geheugen
         QRcode::png($unieke_link, null, QR_ECLEVEL_L, 6, 2);
         $image_data = ob_get_contents();
+        
+        // 3. Sluit de buffer netjes af
         ob_end_clean();
         
-        // Zet de ruwe afbeelding om in een perfect leesbare HTML-afbeelding (Base64)
+        // 🔥 CRUCIALE FIX: Vertel Apache dat we weer gewone HTML-tekst sturen!
+        // Dit voorkomt dat je server denkt dat de hele pagina één grote afbeelding is.
+        header("Content-Type: text/html");
+        
+        // 4. Zet de ruwe afbeelding om in een Base64-tekststring
         $base64_qr = 'data:image/png;base64,' . base64_encode($image_data);
     ?>
         <div class="card">
@@ -70,6 +77,7 @@ $test_songs = [
             <p style="font-size: 10px; color: #aaa; word-break: break-all; margin-top: 15px;">Link: <?= $unieke_link ?></p>
         </div>
     <?php endforeach; ?>
+
 
 </body>
 </html>
