@@ -5,7 +5,11 @@ if (!isset($_SESSION['loggedin'])) {
     exit;
 }
 
-// 1. Koppel het officiële bibliotheekbestand dat je net hebt gedownload
+// Foutrapportage aanzetten zodat we ALLES zien als er iets misgaat
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// 1. Koppel de bibliotheek
 require_once('phpqrcode/qrlib.php');
 
 // Bepaal de huidige server URL dynamisch naar jouw mobiele game_play.php pagina
@@ -29,11 +33,8 @@ $test_songs = [
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #e0e6ed; padding: 20px; text-align: center; }
         .card { background: white; padding: 25px; margin: 20px auto; max-width: 380px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
-        
-        /* Stijling voor de officiële QR-afbeelding */
         .qr-box { margin: 20px 0; display: flex; justify-content: center; }
-        .qr-box img { width: 180px; height: 180px; border: 1px solid #eaeaea; padding: 10px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        
+        .qr-box img { width: 180px; height: 180px; border: 1px solid #eaeaea; padding: 10px; background: #fff; }
         .btn-back { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 10px; display: inline-block; margin-bottom: 20px; font-weight: 600; }
     </style>
 </head>
@@ -41,43 +42,35 @@ $test_songs = [
 
     <a href="myapp.php" class="btn-back">⬅️ Terug naar Menu</a>
     <h1>Muziek Game QR-Codes</h1>
-    <p>Dit zijn officiële QR-codes. Scan ze met de normale camera van je telefoon!</p>
+    <p>Dit zijn officiële QR-codes.</p>
 
     <?php foreach ($test_songs as $id => $song): 
-        // Maak de unieke link die de telefoon straks moet openen
         $unieke_link = $server_url . $id;
         
-        // 1. Start de buffer om de afbeelding op te vangen
-        ob_start();
+        // Bepaal de bestandsnaam waar het plaatje moet worden opgeslagen
+        $bestandsnaam = "qrcodes/qr_" . $id . ".png";
         
-        // 2. Genereer de QR-code bitstream in het geheugen
-        QRcode::png($unieke_link, null, QR_ECLEVEL_L, 6, 2);
-        $image_data = ob_get_contents();
-        
-        // 3. Sluit de buffer netjes af
-        ob_end_clean();
-        
-        // 🔥 CRUCIALE FIX: Vertel Apache dat we weer gewone HTML-tekst sturen!
-        // Dit voorkomt dat je server denkt dat de hele pagina één grote afbeelding is.
-        header("Content-Type: text/html");
-        
-        // 4. Zet de ruwe afbeelding om in een Base64-tekststring
-        $base64_qr = 'data:image/png;base64,' . base64_encode($image_data);
+        // Genereer de QR-code en sla deze DIRECT op als fysiek bestand
+        // Parameters: QRcode::png(tekst, bestandsnaam, foutcorrectie, pixelgrootte, marge)
+        QRcode::png($unieke_link, $bestandsnaam, QR_ECLEVEL_L, 6, 2);
     ?>
         <div class="card">
             <h3>Kaart #<?= $id ?></h3>
             <p style="color: #555; font-size: 14px; font-weight: 600;"><?= $song['artist'] ?> - <?= $song['title'] ?></p>
             <p style="color: #999; font-size: 12px; margin-top: -10px;">Jaartal: <?= $song['year'] ?></p>
             
-            <!-- Hier tonen we de échte QR-code afbeelding -->
+            <!-- We linken nu simpelweg naar het zojuist gemaakte plaatje -->
             <div class="qr-box">
-                <img src="<?= $base64_qr ?>" alt="QR Code voor Liedje <?= $id ?>">
+                <?php if (file_exists($bestandsnaam)): ?>
+                    <img src="<?= $bestandsnaam ?>?v=<?= time() ?>" alt="QR Code <?= $id ?>">
+                <?php else: ?>
+                    <p style="color: red;">Fout: Plaatje kon niet worden opgeslagen in de map 'qrcodes'.</p>
+                <?php endif; ?>
             </div>
             
-            <p style="font-size: 10px; color: #aaa; word-break: break-all; margin-top: 15px;">Link: <?= $unieke_link ?></p>
+            <p style="font-size: 10px; color: #aaa; word-break: break-all;">Link: <?= $unieke_link ?></p>
         </div>
     <?php endforeach; ?>
-
 
 </body>
 </html>
