@@ -14,26 +14,34 @@ if (!array_key_exists($id, $test_songs)) {
 
 $current_song = $test_songs[$id];
 
-// 🔥 DYNAMISCHE APPLE MUSIC API ZOEKOPDRACHT
-// We maken een zoekterm van de artiest en de titel (bijv. "Michael Jackson Thriller")
+// 1. Maak de juiste zoekterm voor Apple
 $zoekterm = urlencode($current_song['artist'] . " " . $current_song['title']);
-$api_url = "https://apple.com" . $zoekterm . "&limit=1&media=music&entity=song";
+$api_url = "https://itunes.apple.com/search?term=" . $zoekterm . "&limit=1&entity=song";
 
-// Haal de resultaten op van de Apple server
-$response = @file_get_contents($api_url);
+// 2. Veilige cURL-aanvraag in plaats van file_get_contents
+$ch = curl_init();
+curl_setopt($ch, CURLOPT_URL, $api_url);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+$response = curl_exec($ch);
+curl_close($ch);
+
 $preview_url = "";
 
 if ($response) {
     $json = json_decode($response, true);
-    // Als Apple het liedje heeft gevonden, pakken we de 30-seconden preview URL
+    
+    // 🔥 CRUCIALE FIX: Apple stuurt de resultaten als een lijst (array) terug.
+    // We moeten eerst het eerste resultaat pakken [0] en daar de previewUrl uithalen.
     if (isset($json['results'][0]['previewUrl'])) {
         $preview_url = $json['results'][0]['previewUrl'];
     }
 }
 
-// Mocht de API offline zijn of niks vinden, dan tonen we een melding
+// Foutcontrole met handige debug-informatie voor als het misgaat
 if (empty($preview_url)) {
-    die("Fout: Kon geen legale audio-preview vinden bij Apple Music voor dit liedje.");
+    die("Fout: Kon geen audio-preview vinden voor '" . htmlspecialchars($current_song['artist'] . " - " . $current_song['title']) . "'.");
 }
 ?>
 
@@ -46,10 +54,9 @@ if (empty($preview_url)) {
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #121212; color: white; display: flex; justify-content: center; text-align: center; }
         .phone-wrapper { width: 100%; max-width: 450px; min-height: 100vh; padding: 40px 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; }
-        .header-game { font-size: 24px; font-weight: 800; color: #ff2d55; text-transform: uppercase; letter-spacing: 2px; } /* Apple Music Roze/Rood */
+        .header-game { font-size: 24px; font-weight: 800; color: #ff2d55; text-transform: uppercase; letter-spacing: 2px; }
         
-        /* Grote speelknop */
-        .btn-audio { background-color: #ff2d55; color: white; border: none; padding: 18px; border-radius: 35px; font-weight: bold; font-size: 18px; width: 100%; cursor: pointer; margin: 30px 0; box-shadow: 0 4px 15px rgba(255, 45, 85, 0.4); transition: transform 0.1s; }
+        .btn-audio { background-color: #ff2d55; color: white; border: none; padding: 18px; border-radius: 35px; font-weight: bold; font-size: 18px; width: 100%; cursor: pointer; margin: 30px 0; box-shadow: 0 4px 15px rgba(255, 45, 85, 0.4); }
         .btn-audio.playing { background-color: #222; border: 2px solid #ff2d55; box-shadow: none; }
         
         .btn-reveal { background-color: #ffffff; color: #121212; border: none; padding: 18px; border-radius: 35px; font-weight: bold; font-size: 18px; cursor: pointer; width: 100%; }
@@ -64,7 +71,7 @@ if (empty($preview_url)) {
             <div class="header-game">🎵 Hitscanner Stream</div>
             <p style="color: #b3b3b3;">Gekoppeld met de legale Apple Music database.</p>
             
-            <!-- De onzichtbare HTML5 audiospeler die de Apple link inlaadt -->
+            <!-- De audiospeler die de .m4a preview van Apple inlaadt -->
             <audio id="audioPlayer" src="<?= $preview_url ?>"></audio>
             
             <button class="btn-audio" id="playBtn" onclick="toggleAudio()">▶️ Luister Preview (30s)</button>
