@@ -1,5 +1,4 @@
 <?php
-// Foutrapportage tijdelijk aan om te zien wat er gebeurt
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
@@ -10,56 +9,30 @@ try {
     $db = new PDO('sqlite:/var/www/html/MyData/data.db');
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // 2. 🔥 AUTOMATISCHE CHECK: Bestaat de tabel wel? Zo nee, maak hem aan!
-    $db->exec("CREATE TABLE IF NOT EXISTS game_songs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        artist TEXT NOT NULL,
-        title TEXT NOT NULL,
-        year INTEGER NOT NULL,
-        theme TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-
-    // Als de tabel leeg is, stoppen we direct de 3 testnummers erin
-    $check = $db->query("SELECT COUNT(*) FROM game_songs")->fetchColumn();
-    if ($check == 0) {
-        $db->exec("INSERT INTO game_songs (artist, title, year, theme) VALUES 
-            ('Michael Jackson', 'Thriller', 1982, 'Pop'),
-            ('Queen', 'Bohemian Rhapsody', 1975, 'Rock'),
-            ('Dua Lipa', 'Levitating', 2020, 'Pop')");
-    }
+    // 2. Extra check: Mocht de naam per ongeluk als 'Dua' in de tabel staan, herstel dit naar 'Dua Lipa'
+    $db->exec("UPDATE game_songs SET artist = 'Dua Lipa' WHERE artist = 'Dua'");
     
     // 3. Zoek het liedje op basis van het ID
     $stmt = $db->prepare("SELECT artist, title, year FROM game_songs WHERE id = ?");
     $stmt->execute([$id]);
     $current_song = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    // 4. Foutopsporing (Als het liedje niet wordt gevonden)
     if (!$current_song) {
-        echo "<div style='background: #dc3545; color: white; padding: 20px; text-align: center; font-family: sans-serif;'>";
-        echo "<h3>❌ Fout: Liedje niet gevonden!</h3>";
-        echo "<p>Jouw telefoon scant nu <strong>ID-nummer: " . $id . "</strong></p>";
-        
-        // Laat zien welke ID's wél in de database staan
-        $alle_ids = $db->query("SELECT id FROM game_songs")->fetchAll(PDO::FETCH_COLUMN);
-        echo "<p>Beschikbare ID's in jouw SQLite database: " . implode(', ', $alle_ids) . "</p>";
-        echo "<p>Sluit dit venster en probeer de QR-code opnieuw te scannen.</p>";
-        echo "</div>";
-        exit;
+        die("Liedje met ID " . $id . " niet gevonden in de SQLite database!");
     }
 
 } catch (Exception $e) {
-    die("Database of SQLite maprechten fout: " . $e->getMessage());
+    die("Database fout: " . $e->getMessage());
 }
 
-// 5. Maak de juiste zoekterm voor Apple Music (blijft hetzelfde)
+// 4. Maak de juiste zoekterm voor Apple Music
 $zoekterm = urlencode($current_song['artist'] . " " . $current_song['title']);
-$api_url = "https://apple.com" . $zoekterm . "&limit=1&entity=song";
+$api_url = "https://itunes.apple.com/search?term=" . $zoekterm . "&limit=1&entity=song";
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $api_url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
+curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
 curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 $response = curl_exec($ch);
 curl_close($ch);
@@ -67,11 +40,15 @@ curl_close($ch);
 $preview_url = "";
 if ($response) {
     $json = json_decode($response, true);
+    
+    // 🔥 CRUCIALE FIX: Apple zet de data in een array onder 'results'. 
+    // We moeten eerst het eerste item [0] pakken!
     if (isset($json['results'][0]['previewUrl'])) {
         $preview_url = $json['results'][0]['previewUrl'];
     }
 }
 
+// Foutcontrole met handige debug-informatie
 if (empty($preview_url)) {
     die("Fout: Kon geen audio-preview vinden voor '" . htmlspecialchars($current_song['artist'] . " - " . $current_song['title']) . "'.");
 }
