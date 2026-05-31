@@ -5,16 +5,19 @@ if (!isset($_SESSION['loggedin'])) {
     exit;
 }
 
-// Tijdelijke test-database (Later koppelen we dit aan MySQL)
-$test_songs = [
-    1 => ["artist" => "Michael Jackson", "title" => "Thriller", "year" => 1982, "spotify" => "https://spotify.com"],
-    2 => ["artist" => "Queen", "title" => "Bohemian Rhapsody", "year" => 1975, "spotify" => "https://spotify.com"],
-    3 => ["artist" => "Dua Lipa", "title" => "Levitating", "year" => 2020, "spotify" => "https://spotify.com"]
-];
+// 1. Koppel het officiële bibliotheekbestand dat je net hebt gedownload
+require_once('phpqrcode/qrlib.php');
 
-// Bepaal de huidige server URL dynamisch
+// Bepaal de huidige server URL dynamisch naar jouw mobiele game_play.php pagina
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
 $server_url = $protocol . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/game_play.php?id=";
+
+// Testdata van de liedjes
+$test_songs = [
+    1 => ["artist" => "Michael Jackson", "title" => "Thriller", "year" => 1982],
+    2 => ["artist" => "Queen", "title" => "Bohemian Rhapsody", "year" => 1975],
+    3 => ["artist" => "Dua Lipa", "title" => "Levitating", "year" => 2020]
+];
 ?>
 
 <!DOCTYPE html>
@@ -22,39 +25,50 @@ $server_url = $protocol . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Generator</title>
-    <!-- QR Code Bibliotheek inladen vanaf CDN voor de test -->
-    <script src="https://cloudflare.com"></script>
+    <title>Echte QR Generator</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #e0e6ed; padding: 20px; text-align: center; }
-        .card { background: white; padding: 20px; margin: 15px auto; max-width: 400px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .qr-box { display: flex; justify-content: center; margin: 15px 0; }
-        .btn-back { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 10px; display: inline-block; margin-bottom: 20px; }
+        .card { background: white; padding: 25px; margin: 20px auto; max-width: 380px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
+        
+        /* Stijling voor de officiële QR-afbeelding */
+        .qr-box { margin: 20px 0; display: flex; justify-content: center; }
+        .qr-box img { width: 180px; height: 180px; border: 1px solid #eaeaea; padding: 10px; background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        
+        .btn-back { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 10px; display: inline-block; margin-bottom: 20px; font-weight: 600; }
     </style>
 </head>
 <body>
 
     <a href="myapp.php" class="btn-back">⬅️ Terug naar Menu</a>
     <h1>Muziek Game QR-Codes</h1>
-    <p>Scan een QR-code met je mobiel om het spel te testen.</p>
+    <p>Dit zijn officiële QR-codes. Scan ze met de normale camera van je telefoon!</p>
 
-    <?php foreach ($test_songs as $id => $song): ?>
+    <?php foreach ($test_songs as $id => $song): 
+        // Maak de unieke link die de telefoon straks moet openen
+        $unieke_link = $server_url . $id;
+        
+        // Gebruik de officiële bibliotheek om de QR-code bitstream te genereren in het geheugen
+        ob_start();
+        // Parameters: QRcode::png(tekst, bestand=null, foutcorrectie=L, pixelgrootte=6, marge=2)
+        QRcode::png($unieke_link, null, QR_ECLEVEL_L, 6, 2);
+        $image_data = ob_get_contents();
+        ob_end_clean();
+        
+        // Zet de ruwe afbeelding om in een perfect leesbare HTML-afbeelding (Base64)
+        $base64_qr = 'data:image/png;base64,' . base64_encode($image_data);
+    ?>
         <div class="card">
-            <h3>Kaart #<?= $id ?> (Testkaart)</h3>
-            <p style="color: #666; font-size: 12px;">Geheim voor spelers: <?= $song['artist'] ?> (<?= $song['year'] ?>)</p>
+            <h3>Kaart #<?= $id ?></h3>
+            <p style="color: #555; font-size: 14px; font-weight: 600;"><?= $song['artist'] ?> - <?= $song['title'] ?></p>
+            <p style="color: #999; font-size: 12px; margin-top: -10px;">Jaartal: <?= $song['year'] ?></p>
             
-            <!-- Hier komt de QR code -->
-            <div class="qr-box" id="qr-<?= $id ?>"></div>
+            <!-- Hier tonen we de échte QR-code afbeelding -->
+            <div class="qr-box">
+                <img src="<?= $base64_qr ?>" alt="QR Code voor Liedje <?= $id ?>">
+            </div>
+            
+            <p style="font-size: 10px; color: #aaa; word-break: break-all; margin-top: 15px;">Link: <?= $unieke_link ?></p>
         </div>
-
-        <script>
-            // Genereer de QR code die verwijst naar game_play.php op jouw Pi
-            new QRCode(document.getElementById("qr-<?= $id ?>"), {
-                text: "<?= $server_url . $id ?>",
-                width: 150,
-                height: 150
-            });
-        </script>
     <?php endforeach; ?>
 
 </body>
