@@ -7,27 +7,37 @@ if (!isset($_SESSION['loggedin'])) {
 
 require_once('phpqrcode/qrlib.php');
 
-// De database met liedjes
-$test_songs = [
-    1 => ["artist" => "Michael Jackson", "title" => "Thriller", "year" => 1982],
-    2 => ["artist" => "Queen", "title" => "Bohemian Rhapsody", "year" => 1975],
-    3 => ["artist" => "Dua Lipa", "title" => "Levitating", "year" => 2020]
-];
+try {
+    // 1. Maak verbinding met jouw SQLite database
+    $db = new PDO('sqlite:/var/www/html/MyData/data.db');
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // 2. Haal 1 willekeurig liedje op via SQLite RANDOM()
+    $stmt = $db->query("SELECT id, artist, title, year FROM game_songs ORDER BY RANDOM() LIMIT 1");
+    $gekozen_song = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$gekozen_song) {
+        die("Er staan nog geen liedjes in de SQLite database!");
+    }
+    
+    $willekeurig_id = $gekozen_song['id'];
 
-// Kies een willekeurig liedje voor deze speler
-$willekeurig_id = array_rand($test_songs);
+} catch (Exception $e) {
+    die("Database fout: " . $e->getMessage());
+}
 
-// Bouw de link die de spelleider straks gaat scannen
+// 3. Bouw de link voor de spelleider
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
 $scan_url = $protocol . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/game_play.php?id=" . $willekeurig_id;
 
-// Genereer de QR-code direct in het geheugen (Base64)
+// 4. Genereer de QR-code
 ob_start();
 QRcode::png($scan_url, null, QR_ECLEVEL_L, 6, 2);
 $image_data = ob_get_contents();
 ob_end_clean();
 $base64_qr = 'data:image/png;base64,' . base64_encode($image_data);
 ?>
+
 
 <!DOCTYPE html>
 <html lang="nl">

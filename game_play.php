@@ -1,49 +1,49 @@
 <?php
-// Dezelfde database-lijst
-$test_songs = [
-    1 => ["artist" => "Michael Jackson", "title" => "Thriller", "year" => 1982],
-    2 => ["artist" => "Queen", "title" => "Bohemian Rhapsody", "year" => 1975],
-    3 => ["artist" => "Dua Lipa", "title" => "Levitating", "year" => 2020]
-];
+$id = isset($_GET['id']) ? (int)$GET['id'] : 0;
 
-$id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-
-if (!array_key_exists($id, $test_songs)) {
-    die("Liedje niet gevonden!");
+try {
+    // 1. Maak verbinding met jouw SQLite database
+    $db = new PDO('sqlite:/var/www/html/MyData/data.db');
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    // 2. Zoek het liedje op basis van het ID
+    $stmt = $db->prepare("SELECT artist, title, year FROM game_songs WHERE id = ?");
+    $stmt->execute([$id]);
+    $current_song = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$current_song) {
+        die("Liedje niet gevonden in de SQLite database!");
+    }
+} catch (Exception $e) {
+    die("Database fout: " . $e->getMessage());
 }
 
-$current_song = $test_songs[$id];
-
-// 1. Maak de juiste zoekterm voor Apple
+// 3. Maak de juiste zoekterm voor Apple Music
 $zoekterm = urlencode($current_song['artist'] . " " . $current_song['title']);
-$api_url = "https://itunes.apple.com/search?term=" . $zoekterm . "&limit=1&entity=song";
+$api_url = "https://apple.com" . $zoekterm . "&limit=1&entity=song";
 
-// 2. Veilige cURL-aanvraag in plaats van file_get_contents
+// 4. Veilige cURL-aanvraag naar Apple Music
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $api_url);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0');
 curl_setopt($ch, CURLOPT_TIMEOUT, 10);
 $response = curl_exec($ch);
 curl_close($ch);
 
 $preview_url = "";
-
 if ($response) {
     $json = json_decode($response, true);
-    
-    // 🔥 CRUCIALE FIX: Apple stuurt de resultaten als een lijst (array) terug.
-    // We moeten eerst het eerste resultaat pakken [0] en daar de previewUrl uithalen.
-    if (isset($json['results'][0]['previewUrl'])) {
-        $preview_url = $json['results'][0]['previewUrl'];
+    if (isset($json['results']['previewUrl'])) {
+        $preview_url = $json['results']['previewUrl'];
     }
 }
 
-// Foutcontrole met handige debug-informatie voor als het misgaat
 if (empty($preview_url)) {
     die("Fout: Kon geen audio-preview vinden voor '" . htmlspecialchars($current_song['artist'] . " - " . $current_song['title']) . "'.");
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="nl">
