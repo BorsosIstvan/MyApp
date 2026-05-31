@@ -174,6 +174,11 @@ if (!isset($_SESSION['loggedin'])) {
 				<div class="icon">🎯</div>
 				<span>Rapporten</span>
 			</a>
+			<!-- NIEUW: De Muziek Game Knop -->
+            <a href="game_generator.php" class="menu-item" style="border-top: 5px solid #1DB954;">
+                <div class="icon">🎵</div>
+                <span>Muziek Game</span>
+            </a>
         </div>
 
     </div>
