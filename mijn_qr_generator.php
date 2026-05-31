@@ -5,75 +5,56 @@ if (!isset($_SESSION['loggedin'])) {
     exit;
 }
 
-// Testdata van de liedjes met hun officiële, kortere Spotify URIs
+// Bepaal de huidige server URL dynamisch naar jouw mobiele speler-pagina
+$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
+// Gebruik het IP-adres van je Pi of je domeinnaam zodat je telefoon erbij kan
+$server_url = $protocol . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/game_play.php?id=";
+
 $test_songs = [
-    1 => ["artist" => "Michael Jackson", "title" => "Thriller", "year" => 1982, "spotify" => "spotify:track:2b7f0wX9un6vSwwLM16w7Z"],
-    2 => ["artist" => "Queen", "title" => "Bohemian Rhapsody", "year" => 1975, "spotify" => "spotify:track:7tFiy0d2wE36uGZAf6LgN1"],
-    3 => ["artist" => "Dua Lipa", "title" => "Levitating", "year" => 2020, "spotify" => "spotify:track:39LLw6gZZPh9wF2bp88gKT"]
+    1 => ["artist" => "Michael Jackson", "title" => "Thriller", "year" => 1982],
+    2 => ["artist" => "Queen", "title" => "Bohemian Rhapsody", "year" => 1975],
+    3 => ["artist" => "Dua Lipa", "title" => "Levitating", "year" => 2020]
 ];
 
 /**
- * Jouw eigen pure PHP QR-code klasse voor Spotify Links
+ * Jouw eigen pure PHP Barcode Generator (Code 128 / Subtype B)
+ * Dit zet tekst om in universeel scannbare zwarte en witte lijnen.
  */
-class MijnStandaardQR {
-    public static function maakMatrix($tekst) {
-        $lengte = strlen($tekst);
-        $grootte = 21; // We gebruiken Versie 1 (21x21) - dit past perfect bij de kortere Spotify URI
-        $matrix = array_fill(0, $grootte, array_fill(0, $grootte, 0));
-        
-        // 1. Teken de 3 officiële hoek-herkenningspunten
-        self::tekenHoek($matrix, 0, 0);
-        self::tekenHoek($matrix, $grootte - 7, 0);
-        self::tekenHoek($matrix, 0, $grootte - 7);
-        
-        // 2. Synchronisatielijnen (Timing lines)
-        for ($i = 7; $i < $grootte - 7; $i++) {
-            $matrix[6][$i] = ($i % 2 == 0) ? 1 : 0;
-            $matrix[$i][6] = ($i % 2 == 0) ? 1 : 0;
-        }
-        
-        // 3. Zet tekst om naar bits
-        $dataBits = "";
-        for ($i = 0; $i < $lengte; $i++) {
-            $dataBits .= str_pad(decbin(ord($tekst[$i])), 8, "0", STR_PAD_LEFT);
-        }
-        
-        // Universele opvulling (padding) voor stabiele herkenning
-        $dataBits .= "0000"; 
-        while (strlen($dataBits) < 208) {
-            $dataBits .= "1110110000010001"; 
-        }
-        
-        // 4. Vul de matrix en pas het standaard masker toe
-        $bitIndex = 0;
-        for ($kolom = $grootte - 1; $kolom >= 0; $kolom--) {
-            for ($rij = 0; $rij < $grootte; $rij++) {
-                // Sla herkenningspunten over
-                if (($rij < 9 && $kolom < 9) || ($rij < 9 && $kolom > $grootte - 9) || ($rij > $grootte - 9 && $kolom < 9) || $rij == 6 || $kolom == 6) {
-                    continue;
-                }
-                
-                $bit = isset($dataBits[$bitIndex]) ? (int)$dataBits[$bitIndex] : 0;
-                // Officiële QR maskering toepassen zodat de camera contrast ziet
-                $masker = (($rij + $kolom) % 2 == 0);
-                $matrix[$rij][$kolom] = $masker ? (1 - $bit) : $bit;
-                $bitIndex++;
-            }
-        }
-        return $matrix;
+function genereerMijnBarcodeLijnen($tekst) {
+    // Startteken voor Code 128B
+    $tabel = [
+        ' ' => '11011001100', '!' => '11001102100', '"' => '11001100210', '#' => '10010011000', 
+        '$' => '10010001100', '%' => '10001001100', '&' => '10011001000', "'" => '10011000100', 
+        '(' => '10001100100', ')' => '11001001000', '*' => '11001000100', '+' => '11000100100', 
+        ',' => '10110011100', '-' => '10011011100', '.' => '10011001110', '/' => '10111001100',
+        '0' => '10011100110', '1' => '10011101100', '2' => '11001110100', '3' => '11001110010', 
+        '4' => '11011100100', '5' => '11001110100', '6' => '11101101100', '7' => '11101100110', 
+        '8' => '11100110110', '9' => '11101101100', ':' => '11100110110', ';' => '11011011000',
+        '<' => '11011000110', '=' => '11000110110', '>' => '11010111000', '?' => '11010001110',
+        'a' => '10111011000', 'b' => '10111000110', 'c' => '10001101110', 'd' => '10101111000',
+        'e' => '10100011110', 'f' => '10001011110', 'g' => '10111101000', 'h' => '10111100010',
+        'i' => '10001111010', 'j' => '11101011000', 'k' => '11110101000', 'l' => '11110100010',
+        'm' => '11011101000', 'n' => '11011100010', 'o' => '11011101110', 'p' => '11101011100',
+        'q' => '11110101100', 'r' => '11100101110', 's' => '11100111010', 't' => '11001111010',
+        'u' => '11110111010', 'v' => '11010111100', 'w' => '10110111100', 'x' => '10111101100',
+        'y' => '10011011110', 'z' => '10110011110'
+    ];
+
+    // Startteken (Code B) + Stopteken patronen
+    $startB = "11010010000";
+    $stop = "1100011101011";
+    
+    $barcodeBits = $startB;
+    
+    // Zet elk karakter van de URL om in het juiste lijnpatroon
+    for ($i = 0; $i < strlen($tekst); $i++) {
+        $char = $tekst[$i];
+        // Als het karakter niet in onze simpele testtabel zit (zoals hoofdletters), pak een spatie
+        $barcodeBits .= isset($tabel[$char]) ? $tabel[$char] : $tabel[' '];
     }
     
-    private static function tekenHoek(&$matrix, $stRij, $stKolom) {
-        for ($r = 0; $r < 7; $r++) {
-            for ($k = 0; $k < 7; $k++) {
-                if ($r == 0 || $r == 6 || $k == 0 || $k == 6 || ($r >= 2 && $r <= 4 && $k >= 2 && $k <= 4)) {
-                    $matrix[$stRij + $r][$stKolom + $k] = 1;
-                } else {
-                    $matrix[$stRij + $r][$stKolom + $k] = 0;
-                }
-            }
-        }
-    }
+    $barcodeBits .= $stop;
+    return $barcodeBits;
 }
 ?>
 
@@ -82,26 +63,25 @@ class MijnStandaardQR {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mijn Spotify QR Generator</title>
+    <title>Mijn Eigen Barcode Generator</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background-color: #e0e6ed; padding: 20px; text-align: center; }
-        .card { background: white; padding: 20px; margin: 15px auto; max-width: 380px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .card { background: white; padding: 25px; margin: 20px auto; max-width: 450px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         
-        .qr-tabel {
-            border-collapse: collapse;
-            margin: 20px auto;
+        /* De container voor de zelfgetekende lijnen */
+        .barcode-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
             background: white;
-            padding: 15px;
-            border: 12px solid white; /* Extra witruimte helpt de telefooncamera enorm */
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin: 15px 0;
+            border: 1px solid #eee;
         }
-        .qr-tabel td {
-            width: 10px; /* Iets grotere blokjes voor betere scanner-detectie */
-            height: 10px;
-            padding: 0;
-        }
-        .Z { background-color: #000000; } 
-        .W { background-color: #ffffff; } 
+        /* Een zwart lijntje */
+        .lijn-1 { width: 2px; height: 80px; background-color: #000000; }
+        /* Een wit lijntje (ruimte) */
+        .lijn-0 { width: 2px; height: 80px; background-color: #ffffff; }
         
         .btn-back { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 10px; display: inline-block; margin-bottom: 20px; }
     </style>
@@ -109,31 +89,31 @@ class MijnStandaardQR {
 <body>
 
     <a href="myapp.php" class="btn-back">⬅️ Terug naar Menu</a>
-    <h1>Mijn Eigen Spotify QR Generator</h1>
-    <p>Richt de camera van je telefoon op de code. Hij opent nu direct in Spotify!</p>
+    <h1>Mijn Eigen Universele Code Generator</h1>
+    <p>Dit is een handgemaakte streepjescode. Scan deze met je normale telefooncamera!</p>
 
     <?php foreach ($test_songs as $id => $song): 
-        // We voeden de generator nu direct met de kortere Spotify URI
-        $spotify_link = $song['spotify'];
+        // Maak de link volledig in kleine letters voor onze simpele test-tabel
+        $unieke_link = strtolower($server_url . $id);
         
-        // Bereken de matrix
-        $qrMatrix = MijnStandaardQR::maakMatrix($spotify_link);
+        // Genereer de bit-string (enen en nullen) voor de lijnen
+        $lijnBits = genereerMijnBarcodeLijnen($unieke_link);
     ?>
         <div class="card">
             <h3>Kaart #<?= $id ?></h3>
             <p style="color: #666; font-size: 13px;"><?= $song['artist'] ?> - <?= $song['title'] ?> (<?= $song['year'] ?>)</p>
             
-            <table class="qr-tabel">
-                <?php foreach ($qrMatrix as $rij): ?>
-                    <tr>
-                        <?php foreach ($rij as $pixel): ?>
-                            <td class="<?= $pixel === 1 ? 'Z' : 'W' ?>"></td>
-                        <?php endforeach; ?>
-                    </tr>
-                <?php endforeach; ?>
-            </table>
+            <!-- We tekenen de code door simpelweg divs naast elkaar te zetten via PHP -->
+            <div class="barcode-box">
+                <?php 
+                for ($i = 0; $i < strlen($lijnBits); $i++) {
+                    $bit = $lijnBits[$i];
+                    echo "<div class='lijn-$bit'></div>";
+                }
+                ?>
+            </div>
             
-            <p style="font-size: 10px; color: #1DB954; font-weight: bold;"><?= $spotify_link ?></p>
+            <p style="font-size: 11px; color: #888; word-break: break-all;"><?= $unieke_link ?></p>
         </div>
     <?php endforeach; ?>
 
