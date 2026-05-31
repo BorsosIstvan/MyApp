@@ -1,6 +1,5 @@
 <?php
 session_start();
-// Alleen de admin (spelleider) mag scannen
 if (!isset($_SESSION['loggedin']) || $_SESSION['user'] !== 'admin') {
     header("Location: myapp.php");
     exit;
@@ -13,74 +12,40 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['user'] !== 'admin') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Spelleider Scanner</title>
-    
-    <!-- We gebruiken de moderne en stabiele HTML5-QR-code scanner bibliotheek vanaf een betrouwbare CDN -->
-    <script src="https://unpkg.com" type="text/javascript"></script>
-    
     <style>
         body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: #121212; color: white; text-align: center; }
-        .phone-wrapper { width: 100%; max-width: 450px; min-height: 100vh; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; margin: auto; }
-        
-        .scanner-container { background: #181818; padding: 25px; border-radius: 25px; border: 2px solid #007bff; margin: 20px 0; }
-        
-        /* Stijl voor de verborgen native camera-knop */
-        input[type="file"] { display: none; }
-        
-        .btn-scan { background-color: #007bff; color: white; padding: 18px; border-radius: 35px; font-weight: bold; font-size: 18px; display: block; margin: 15px 0; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4); }
-        .btn-back { background: #222; color: #007bff; padding: 12px; text-decoration: none; border-radius: 25px; font-weight: bold; border: 1px solid #007bff; }
-        
-        .loading { display: none; color: #ffc107; font-weight: bold; margin-top: 10px; }
+        .phone-wrapper { width: 100%; max-width: 450px; min-height: 100vh; padding: 25px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; margin: auto; }
+        .instruction-box { background: #181818; padding: 30px 20px; border-radius: 25px; border: 2px solid #007bff; margin: 30px 0; }
+        .step { font-size: 18px; margin: 15px 0; text-align: left; display: flex; align-items: center; }
+        .step-num { background: #007bff; color: white; border-radius: 50%; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 15px; flex-shrink: 0; }
+        .btn-back { background: #222; color: #007bff; padding: 12px; text-decoration: none; border-radius: 25px; font-weight: bold; border: 1px solid #007bff; display: block; }
     </style>
 </head>
 <body>
 
     <div class="phone-wrapper">
         <div>
-            <h2>📷 Hitscanner Spelleider</h2>
-            <p style="color: #aaa;">Gebruik de camera van je Samsung om de kaart van de speler te scannen.</p>
+            <h2>📷 QR Code Scannen</h2>
+            <p style="color: #aaa;">Gebruik de ingebouwde camera van je telefoon.</p>
             
-            <div class="scanner-container">
-                <!-- Deze label activeert de echte Samsung camera via HTML5 -->
-                <label for="qr-file-input" class="btn-scan">📸 Start Samsung Camera</label>
-                <input type="file" id="qr-file-input" accept="image/*" capture="environment">
-                
-                <div class="loading" id="loadingText">⏳ Code analyseren...</div>
+            <div class="instruction-box">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <span>Sluit deze app (of druk op de Home-knop).</span>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <span>Open de **normale Camera-app** van je Samsung.</span>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <span>Richt op de QR-code van de speler en klik op de link die in beeld verschijnt.</span>
+                </div>
             </div>
         </div>
 
-        <a href="myapp.php" class="btn-back">⬅️ Stop Scanner</a>
+        <a href="myapp.php" class="btn-back">⬅️ Terug naar Menu</a>
     </div>
-
-    <script type="text/javascript">
-        const fileInput = document.getElementById('qr-file-input');
-        const loadingText = document.getElementById('loadingText');
-
-        // Initialiseer de HTML5 QR-code lezer in de achtergrond (zonder live video-feed, puur voor fotoverwerking)
-        const html5QrCode = new Html5Qrcode("qr-file-input");
-
-        fileInput.addEventListener('change', e => {
-            if (e.target.files.length === 0) {
-                return;
-            }
-
-            // Toon laad-indicator
-            loadingText.style.display = "block";
-            const imageFile = e.target.files[0];
-            
-            // Scan de gemaakte foto direct lokaal in JavaScript
-            html5QrCode.scanFile(imageFile, true)
-                .then(decodedText => {
-                    // Succes! 'decodedText' bevat de URL naar game_play.php?id=X
-                    // Stuur de spelleider direct door
-                    window.location.href = decodedText;
-                })
-                .catch(err => {
-                    // Als de foto wazig was of er geen QR-code is gevonden
-                    loadingText.style.display = "none";
-                    alert("Fout: Geen duidelijke QR-code herkend. Probeer de code rechter en scherper te fotograferen.");
-                });
-        });
-    </script>
 
 </body>
 </html>
