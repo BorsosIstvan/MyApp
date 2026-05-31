@@ -179,6 +179,19 @@ if (!isset($_SESSION['loggedin'])) {
                 <div class="icon">🎵</div>
                 <span>Muziek Game</span>
             </a>
+			<!-- KNOP 1: Voor alle spelers om hun geheime kaart te tonen -->
+            <a href="toon_kaart.php" class="menu-item" style="border-top: 5px solid #ff2d55;">
+                <div class="icon">🃏</div>
+                <span>Mijn Kaart</span>
+            </a>
+
+            <!-- KNOP 2: Alleen voor de spelleider (admin) om kaarten te scannen -->
+            <?php if ($_SESSION['user'] === 'admin'): ?>
+                <a href="spelleider_scanner.php" class="menu-item" style="border-top: 5px solid #007bff;">
+                    <div class="icon">📷</div>
+                    <span>QR Scanner</span>
+                </a>
+            <?php endif; ?>
         </div>
 
     </div>
